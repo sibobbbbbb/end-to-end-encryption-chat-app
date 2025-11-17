@@ -7,15 +7,20 @@ set "ROOT=%~dp0"
 set "BACKEND=%ROOT%backend"
 set "FRONTEND=%ROOT%frontend"
 
-echo ==[ 1/3 ] Start Docker Compose (database) ==
+echo == [ 1/4 ] Start Docker Compose (database) ==
 pushd "%BACKEND%"
 docker compose up -d
+
+echo == [ 2/4 ] Start DB Migration ==
+bun db:migrate
+
 popd
 
-echo ==[ 2/3 ] Start BACKEND ==
+echo.
+echo == [ 3/4 ] Start BACKEND ==
 start "backend-dev" cmd /K "cd /d ""%BACKEND%"" && bun run dev"
 
-echo ==[ 3/3 ] Start FRONTEND ==
+echo == [ 4/4 ] Start FRONTEND ==
 start "frontend-dev" cmd /K "cd /d ""%FRONTEND%"" && bun run dev"
 
 echo.

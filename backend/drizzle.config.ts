@@ -15,7 +15,7 @@ export default defineConfig({
   out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {
-    host: "localhost",
+    host: env.DB_HOST,
     port: env.DB_PORT,
     user: env.POSTGRES_USER,
     password: env.POSTGRES_PASSWORD,
