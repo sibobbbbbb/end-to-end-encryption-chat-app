@@ -23,9 +23,8 @@ export class AuthController {
    */
   public register = async (c: Context) => {
     const validatedData = c.get("validatedData") as RegisterRequest;
-    const newUser = await this.authService.register(validatedData);
-    const { password: _password, refreshToken: _refreshToken, ...safeUser } = newUser;
-    return sendSuccess(c, 201, "User registered successfully", safeUser);
+    await this.authService.register(validatedData);
+    return sendSuccess(c, 201, "User registered successfully");
   };
 
   /**

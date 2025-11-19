@@ -1,4 +1,3 @@
-import * as bcrypt from "bcrypt";
 import {
   ConflictError,
   UnauthorizedError,
@@ -27,18 +26,16 @@ export class AuthService {
    * Registers a new user.
    */
   public async register(requestData: RegisterRequest): Promise<User> {
-    const existingUser = await this.userRepository.findByEmail(
-      requestData.email
+    const existingUser = await this.userRepository.findByUsername(
+      requestData.username
     );
     if (existingUser) {
-      throw new ConflictError("User with this email already exists");
+      throw new ConflictError("User with this username already exists");
     }
 
-    const hashedPassword = await bcrypt.hash(requestData.password, 10);
     const dataToInsert = {
-      name: requestData.name,
-      email: requestData.email,
-      password: hashedPassword,
+      username: requestData.username,
+      publicKey: requestData.publicKey,
     };
 
     const newUser = await this.userRepository.create(dataToInsert);
