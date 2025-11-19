@@ -1,18 +1,24 @@
-import * as bcrypt from "bcrypt";
+import { ec as EC } from 'elliptic';
+import { sha3_256 } from 'js-sha3';
 import {
   ConflictError,
   UnauthorizedError,
-} from "@/shared/exceptions/api-error";
-import { User } from "@/shared/models/user.model";
-import { LoginRequest, RegisterRequest } from "@/modules/auth/auth.schemas";
-import { UserRepository } from "@/shared/repositories/user.repository";
+} from '@/shared/exceptions/api-error';
+import { User } from '@/shared/models/user.model';
+import {
+  LoginVerifyRequest,
+  ChallengeRequest,
+  RegisterRequest,
+} from '@/modules/auth/auth.schemas';
+import { UserRepository } from '@/shared/repositories/user.repository';
 import {
   generateTokens,
-  hashRefreshToken,
-  verifyRefreshToken,
   TokenPayload,
-} from "./auth.token.helper";
-import { ForbiddenError } from "@/shared/exceptions/api-error";
+} from './auth.token.helper';
+import { NotFoundError } from '@/shared/exceptions/api-error';
+
+// Elliptic Curve
+const ec = new EC('secp256k1');
 
 /**
  * @class AuthService
@@ -27,18 +33,16 @@ export class AuthService {
    * Registers a new user.
    */
   public async register(requestData: RegisterRequest): Promise<User> {
-    const existingUser = await this.userRepository.findByEmail(
-      requestData.email
+    const existingUser = await this.userRepository.findByUsername(
+      requestData.username
     );
     if (existingUser) {
-      throw new ConflictError("User with this email already exists");
+      throw new ConflictError('User with this username already exists');
     }
 
-    const hashedPassword = await bcrypt.hash(requestData.password, 10);
     const dataToInsert = {
-      name: requestData.name,
-      email: requestData.email,
-      password: hashedPassword,
+      username: requestData.username,
+      publicKey: requestData.publicKey,
     };
 
     const newUser = await this.userRepository.create(dataToInsert);
@@ -47,64 +51,52 @@ export class AuthService {
   }
 
   /**
-   * Logs in a user and generates access and refresh tokens.
+   * Creates a challenge for a user.
+   */
+  public async challenge(requestData: ChallengeRequest): Promise<string> {
+    const user = await this.userRepository.findByUsername(requestData.username);
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    // Random Nonce String
+    const nonce =
+      Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+    await this.userRepository.updateNonce(user.id, nonce);
+
+    return nonce;
+  }
+
+  /**
+   * Login - Verify Signature
    */
   public async login(
-    requestData: LoginRequest
-  ): Promise<{ accessToken: string; refreshToken: string }> {
-    const user = await this.userRepository.findByEmail(requestData.email);
-    if (!user) {
-      throw new UnauthorizedError("Invalid email or password");
-    }
-
-    const isPasswordValid = await bcrypt.compare(
-      requestData.password,
-      user.password
-    );
-    if (!isPasswordValid) {
-      throw new UnauthorizedError("Invalid email or password");
-    }
-
-    const payload: TokenPayload = { sub: user.id, name: user.name };
-    const { accessToken, refreshToken } = await generateTokens(payload);
-
-    const hashedToken = await hashRefreshToken(refreshToken);
-    await this.userRepository.updateRefreshToken(user.id, hashedToken);
-
-    return { accessToken, refreshToken };
-  }
-
-  /**
-   * Refreshes the access token using a valid refresh token.
-   */
-  public async refreshToken(
-    providedRefreshToken: string
+    requestData: LoginVerifyRequest
   ): Promise<{ accessToken: string }> {
-    const payload = await verifyRefreshToken(providedRefreshToken);
-    const userInDb = await this.userRepository.findById(payload.sub);
-
-    if (!userInDb || !userInDb.refreshToken) {
-      throw new ForbiddenError("Access Denied");
+    const user = await this.userRepository.findByUsername(requestData.username);
+    if (!user || !user.nonce) {
+      throw new UnauthorizedError('Invalid session or nonce expired');
     }
 
-    const isMatch = await bcrypt.compare(
-      providedRefreshToken,
-      userInDb.refreshToken
-    );
-    if (!isMatch) {
-      throw new ForbiddenError("Access Denied");
+    // Load public key user
+    const key = ec.keyFromPublic(user.publicKey, 'hex');
+
+    // Hash nonce
+    const nonceHash = sha3_256(user.nonce);
+
+    // Verify signature
+    const isValid = key.verify(nonceHash, requestData.signature);
+
+    // Delete nonce
+    await this.userRepository.updateNonce(user.id, null);
+
+    if (!isValid) {
+      throw new UnauthorizedError('Digital Signature verification failed');
     }
 
-    const newPayload: TokenPayload = { sub: userInDb.id, name: userInDb.name };
-    const { accessToken } = await generateTokens(newPayload);
+    const payload: TokenPayload = { sub: user.id, name: user.username };
+    const { accessToken } = await generateTokens(payload);
 
     return { accessToken };
-  }
-
-  /**
-   * Logs out a user by removing their refresh token.
-   */
-  public async logout(userId: number): Promise<void> {
-    await this.userRepository.updateRefreshToken(userId, null);
   }
 }
