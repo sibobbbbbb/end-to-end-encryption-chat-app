@@ -1,7 +1,7 @@
-import { db } from "@/shared/configs/database";
-import { usersTable } from "@/shared/configs/database/schema";
-import { NewUser, User } from "@/shared/models/user.model";
-import { eq } from "drizzle-orm";
+import { db } from '@/shared/configs/database';
+import { usersTable } from '@/shared/configs/database/schema';
+import { NewUser, User } from '@/shared/models/user.model';
+import { eq } from 'drizzle-orm';
 
 /**
  * @class UserRepository
@@ -43,5 +43,9 @@ export class UserRepository {
     return await db.query.usersTable.findFirst({
       where: eq(usersTable.id, id),
     });
+  }
+
+  public async updateNonce(userId: number, nonce: string | null): Promise<void> {
+    await db.update(usersTable).set({ nonce }).where(eq(usersTable.id, userId));
   }
 }
