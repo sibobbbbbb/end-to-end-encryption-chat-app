@@ -20,7 +20,7 @@ const client = postgres({
   user: env.POSTGRES_USER,
   password: env.POSTGRES_PASSWORD,
   database: env.POSTGRES_DB,
-  // ssl: "require",
+  ssl: env.NODE_ENV === 'production' ? 'require' : false,
 });
 
 // Initialize the database connection with the schema
