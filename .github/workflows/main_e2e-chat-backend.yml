@@ -31,10 +31,10 @@ jobs:
       - name: Build and push container image to registry
         uses: docker/build-push-action@v3
         with:
-          context: .
+          context: ./backend
           push: true
           tags: registrye2echat.azurecr.io/${{ secrets.AZUREAPPSERVICE_CONTAINERUSERNAME_C94A2ABCC95F4174B74FE35DA944188A }}/registrye2echat/backend-image:${{ github.sha }}
-          file: ./Dockerfile
+          file: ./backend/Dockerfile
 
   deploy:
     runs-on: ubuntu-latest
