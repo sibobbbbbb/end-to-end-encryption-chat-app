@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { cors } from 'hono/cors';
 import { pinoLogger } from "hono-pino";
 import { logger } from "@/shared/configs/logger";
 import api from "@/routes";
@@ -17,6 +18,16 @@ import { env } from "@/shared/configs/environment";
 
 // Create a new Hono application instance
 const app = new Hono();
+
+// Cors
+app.use('/api/*', cors({
+  origin: '*',
+  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowHeaders: ['Content-Type', 'Authorization'],
+  exposeHeaders: ['Content-Length'],
+  maxAge: 600,
+  credentials: true,
+}));
 
 // Middleware to set secure headers
 app.use("*", secureHeaders());
