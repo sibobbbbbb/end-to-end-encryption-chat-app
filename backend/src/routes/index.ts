@@ -2,7 +2,6 @@ import { Hono } from 'hono';
 import authRouter from '@/modules/auth/auth.route';
 import userRouter from '@/modules/user/user.route';
 import healthRouter from '@/modules/health/health.route';
-import messageRouter from '@/modules/message/message.route';
 
 /**
  * @file Main API router.
@@ -17,7 +16,5 @@ const api = new Hono();
 api.route('/health', healthRouter);
 api.route('/auth', authRouter);
 api.route('/users', userRouter);
-// Route for encrypted chat messages
-api.route('/messages', messageRouter);
 
 export default api;

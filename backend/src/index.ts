@@ -5,7 +5,6 @@ import api from "@/routes";
 import { errorHandler } from "@/shared/exceptions/error-handler";
 import { secureHeaders } from "hono/secure-headers";
 import { env } from "@/shared/configs/environment";
-import { cors } from "hono/cors";
 
 
 /**
@@ -18,22 +17,6 @@ import { cors } from "hono/cors";
 
 // Create a new Hono application instance
 const app = new Hono();
-
-// Configure CORS: allow requests from local frontend during development.
-const allowedOrigin =
-  env.NODE_ENV === "production"
-    ? "*" // In production, adjust this to your frontend domain
-    : "http://localhost:5173";
-
-app.use(
-  "*",
-  cors({
-    origin: allowedOrigin,
-    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
-  })
-);
 
 // Middleware to set secure headers
 app.use("*", secureHeaders());
