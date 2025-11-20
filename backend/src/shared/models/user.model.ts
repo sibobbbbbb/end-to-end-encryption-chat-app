@@ -12,3 +12,5 @@ import { usersTable } from "@/shared/configs/database/schema";
 export type User = typeof usersTable.$inferSelect;
 
 export type NewUser = typeof usersTable.$inferInsert;
+
+export type SafeUser = Omit<User, "password" | "refreshToken">;

@@ -1,16 +1,17 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "frontend",
       "dependencies": {
         "@radix-ui/react-slot": "^1.2.4",
         "@tailwindcss/vite": "^4.1.17",
-        "bn.js": "^5.2.2",
+        "bn.js": "^5.2.1",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
-        "elliptic": "^6.6.1",
-        "js-sha3": "^0.9.3",
+        "elliptic": "^6.5.4",
+        "js-sha3": "^0.9.2",
         "lucide-react": "^0.553.0",
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
@@ -19,8 +20,6 @@
       },
       "devDependencies": {
         "@eslint/js": "^9.39.1",
-        "@types/bn.js": "^5.2.0",
-        "@types/elliptic": "^6.4.18",
         "@types/node": "^24.10.1",
         "@types/react": "^19.2.2",
         "@types/react-dom": "^19.2.2",
@@ -256,10 +255,6 @@
     "@types/babel__template": ["@types/babel__template@7.4.4", "", { "dependencies": { "@babel/parser": "^7.1.0", "@babel/types": "^7.0.0" } }, "sha512-h/NUaSyG5EyxBIp8YRxo4RMe2/qQgvyowRwVMzhYhBCONbW8PUsg4lkFMrhgZhUe5z3L3MiLDuvyJ/CaPa2A8A=="],
 
     "@types/babel__traverse": ["@types/babel__traverse@7.28.0", "", { "dependencies": { "@babel/types": "^7.28.2" } }, "sha512-8PvcXf70gTDZBgt9ptxJ8elBeBjcLOAcOtoO/mPJjtji1+CdGbHgm77om1GrsPxsiE+uXIpNSK64UYaIwQXd4Q=="],
-
-    "@types/bn.js": ["@types/bn.js@5.2.0", "", { "dependencies": { "@types/node": "*" } }, "sha512-DLbJ1BPqxvQhIGbeu8VbUC1DiAiahHtAYvA0ZEAa4P31F7IaArc8z3C3BRQdWX4mtLQuABG4yzp76ZrS02Ui1Q=="],
-
-    "@types/elliptic": ["@types/elliptic@6.4.18", "", { "dependencies": { "@types/bn.js": "*" } }, "sha512-UseG6H5vjRiNpQvrhy4VF/JXdA3V/Fp5amvveaL+fs28BZ6xIKJBPnUPRlEaZpysD9MbpfaLi8lbl7PGUAkpWw=="],
 
     "@types/estree": ["@types/estree@1.0.8", "", {}, "sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w=="],
 

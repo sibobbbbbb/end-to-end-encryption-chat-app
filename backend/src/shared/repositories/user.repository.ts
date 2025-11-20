@@ -1,7 +1,7 @@
-import { db } from '@/shared/configs/database';
-import { usersTable } from '@/shared/configs/database/schema';
-import { NewUser, User } from '@/shared/models/user.model';
-import { eq } from 'drizzle-orm';
+import { db } from "@/shared/configs/database";
+import { usersTable } from "@/shared/configs/database/schema";
+import { NewUser, User } from "@/shared/models/user.model";
+import { eq } from "drizzle-orm";
 
 /**
  * @class UserRepository
@@ -14,7 +14,7 @@ import { eq } from 'drizzle-orm';
 export class UserRepository {
   /**
    * Creates a new user in the database.
-   * @param data Data for new user.
+   * @param data Data for new user (name, email, hashed password).
    * @returns The newly created User object.
    */
   public async create(data: NewUser): Promise<User> {
@@ -24,13 +24,13 @@ export class UserRepository {
   }
 
   /**
-   * Finds a single user by username.
-   * @param username User's username.
+   * Finds a single user by email address.
+   * @param email User's email address.
    * @returns User object if found, or undefined.
    */
-  public async findByUsername(username: string): Promise<User | undefined> {
+  public async findByEmail(email: string): Promise<User | undefined> {
     return await db.query.usersTable.findFirst({
-      where: eq(usersTable.username, username),
+      where: eq(usersTable.email, email),
     });
   }
 
@@ -45,7 +45,18 @@ export class UserRepository {
     });
   }
 
-  public async updateNonce(userId: number, nonce: string | null): Promise<void> {
-    await db.update(usersTable).set({ nonce }).where(eq(usersTable.id, userId));
+  /**
+   * Updates the refresh token for a user.
+   * @param userId User's unique identifier.
+   * @param refreshToken New refresh token to set, or null to remove it.
+   */
+  public async updateRefreshToken(
+    userId: number,
+    refreshToken: string | null
+  ): Promise<void> {
+    await db
+      .update(usersTable)
+      .set({ refreshToken })
+      .where(eq(usersTable.id, userId));
   }
 }
