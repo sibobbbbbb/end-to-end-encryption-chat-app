@@ -126,9 +126,3 @@ export const decryptMessage = async (
     throw new Error("Decryption Failed");
   }
 };
-
-// --- Helper: derive public key from private key ---
-export const getPublicKeyFromPrivate = (privateKeyHex: string): string => {
-  const key = ec.keyFromPrivate(privateKeyHex);
-  return key.getPublic('hex');
-};

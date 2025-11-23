@@ -1,10 +1,8 @@
 import { useState, useEffect, useRef, type KeyboardEvent } from 'react';
 import { ChatBubble } from '@/components/ChatBubble';
 import { TechnicalDetailsModal } from '@/components/TechnicalDetailsModal';
-import { KeyFingerprintModal } from '@/components/KeyFingerprintModal';
 import { processIncomingMessage, type ProcessedMessage, type IncomingMessagePayload } from '@/lib/messageHandler';
-import { encryptMessage, hashMessage, signMessage, getPublicKeyFromPrivate } from '@/lib/crypto';
-import { sha3_256 } from 'js-sha3';
+import { encryptMessage, hashMessage, signMessage } from '@/lib/crypto';
 import { getPrivateKey } from '@/services/authService';
 import { getContactProfile } from '@/services/userService';
 
@@ -19,7 +17,6 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
   const [contactPublicKey, setContactPublicKey] = useState<string | null>(null);
   const [isKeyLoading, setIsKeyLoading] = useState(false);
   const [selectedMessageForDetails, setSelectedMessageForDetails] = useState<ProcessedMessage | null>(null);
-  const [isFingerprintOpen, setIsFingerprintOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -220,15 +217,6 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
                     </>
                   )}
               </div>
-              <div className="mt-1">
-                <button
-                  onClick={() => setIsFingerprintOpen(true)}
-                  className="text-xs text-gray-300 bg-gray-700/60 px-3 py-1 rounded hover:bg-gray-700/80 ml-0 cursor-pointer"
-                  title="View public key fingerprint"
-                >
-                  View Fingerprint
-                </button>
-              </div>
             </div>
         </div>
       </div>
@@ -311,23 +299,6 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
           }}
         />
       )}
-      {/* Key Fingerprint Modal */}
-      <KeyFingerprintModal
-        isOpen={isFingerprintOpen}
-        onClose={() => setIsFingerprintOpen(false)}
-        username={contactUsername}
-        publicKey={contactPublicKey}
-        localFingerprint={(() => {
-          try {
-            const myPriv = getPrivateKey(currentUser as string);
-            if (!myPriv) return null;
-            const myPub = getPublicKeyFromPrivate(myPriv);
-            return sha3_256(myPub);
-          } catch {
-            return null;
-          }
-        })()}
-      />
     </div>
   );
 }
