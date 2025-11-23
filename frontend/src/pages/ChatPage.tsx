@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, type KeyboardEvent } from 'react';
 import { ChatBubble } from '@/components/ChatBubble';
 import { TechnicalDetailsModal } from '@/components/TechnicalDetailsModal';
 import { KeyFingerprintModal } from '@/components/KeyFingerprintModal';
+import { PublicKeyChangeAlert } from '@/components/PublicKeyChangeAlert';
 import { processIncomingMessage, type ProcessedMessage, type IncomingMessagePayload } from '@/lib/messageHandler';
 import { encryptMessage, hashMessage, signMessage, getPublicKeyFromPrivate } from '@/lib/crypto';
 import { sha3_256 } from 'js-sha3';
@@ -20,6 +21,8 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
   const [isKeyLoading, setIsKeyLoading] = useState(false);
   const [selectedMessageForDetails, setSelectedMessageForDetails] = useState<ProcessedMessage | null>(null);
   const [isFingerprintOpen, setIsFingerprintOpen] = useState(false);
+  const [keyChangeAlert, setKeyChangeAlert] = useState<{ oldKey: string | null; newKey: string | null } | null>(null);
+  const [isBlocked, setIsBlocked] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -50,7 +53,19 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
       try {
         const profile = await getContactProfile(contactUsername);
         if (profile) {
-          setContactPublicKey(profile.publicKey);
+          // Compare with locally known key
+          const knownKey = localStorage.getItem(`known_pub_${contactUsername}`);
+          if (knownKey && knownKey !== profile.publicKey) {
+            // Potential key change detected
+            setKeyChangeAlert({ oldKey: knownKey, newKey: profile.publicKey });
+            setContactPublicKey(profile.publicKey);
+            setIsBlocked(true);
+          } else {
+            setContactPublicKey(profile.publicKey);
+            // Store first time
+            if (profile.publicKey) localStorage.setItem(`known_pub_${contactUsername}`, profile.publicKey);
+            setIsBlocked(false);
+          }
           console.log(`Public key ${contactUsername} didapat:`, profile.publicKey);
         } else {
           console.warn(`User ${contactUsername} tidak ditemukan.`);
@@ -282,7 +297,7 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
             />
             <button 
             onClick={handleSend}
-            disabled={isKeyLoading || !contactPublicKey || !inputText.trim()}
+            disabled={isKeyLoading || isBlocked || !contactPublicKey || !inputText.trim()}
             className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-2xl font-bold hover:from-blue-700 hover:to-purple-700 disabled:from-gray-300 disabled:to-gray-400 transition-all shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none flex items-center gap-2 cursor-pointer disabled:cursor-not-allowed"
             >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -328,6 +343,32 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
           }
         })()}
       />
+      {/* Public Key Change Alert */}
+      {keyChangeAlert && (
+        <PublicKeyChangeAlert
+          isOpen={!!keyChangeAlert}
+          onClose={() => setKeyChangeAlert(null)}
+          username={contactUsername}
+          oldKey={keyChangeAlert.oldKey}
+          newKey={keyChangeAlert.newKey}
+          onViewFingerprint={() => {
+            setIsFingerprintOpen(true);
+          }}
+          onReject={() => {
+            // Block contact: clear public key and keep blocked
+            setContactPublicKey(null);
+            setIsBlocked(true);
+            setKeyChangeAlert(null);
+          }}
+          onAcceptNewKey={() => {
+            if (keyChangeAlert?.newKey) {
+              localStorage.setItem(`known_pub_${contactUsername}`, keyChangeAlert.newKey);
+            }
+            setIsBlocked(false);
+            setKeyChangeAlert(null);
+          }}
+        />
+      )}
     </div>
   );
 }
