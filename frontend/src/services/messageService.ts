@@ -106,11 +106,12 @@ export const pollMessages = async (
     if (lastTimestamp) {
       params.append('since', lastTimestamp);
     }
-
+    const token = localStorage.getItem('token');
     const response = await fetch(`${API_URL}/poll?${params.toString()}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
     });
 
