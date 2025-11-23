@@ -33,9 +33,10 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
       
       // Pindah ke halaman utama
       onLoginSuccess(username);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      alert(error.message || "Terjadi kesalahan");
+      const message = error instanceof Error ? error.message : "Terjadi kesalahan";
+      alert(message);
     } finally {
       setIsLoading(false);
     }

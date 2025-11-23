@@ -1,4 +1,4 @@
-const API_URL = '/api/users';
+// const API_URL = '/api/users'; // Will be used when backend is ready
 
 export interface UserProfile {
   username: string;

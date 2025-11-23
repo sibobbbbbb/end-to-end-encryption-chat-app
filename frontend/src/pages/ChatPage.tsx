@@ -70,7 +70,7 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
             }
             return prev;
         });
-      } catch (err) {
+      } catch {
         // Silent catch untuk polling
       }
     }, 5000); 
