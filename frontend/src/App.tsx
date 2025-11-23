@@ -37,6 +37,7 @@ function App() {
     setCurrentUser(null);
     setSelectedContact(null);
     localStorage.removeItem('last_user');
+    localStorage.removeItem('token');
   };
 
   if (isLoading) {

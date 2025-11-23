@@ -30,10 +30,12 @@ export interface MessageResponse {
  */
 export const sendMessage = async (payload: SendMessagePayload): Promise<MessageResponse> => {
   try {
+    const token = localStorage.getItem('token');
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify(payload),
     });
@@ -67,11 +69,13 @@ export const fetchMessages = async (
     if (lastMessageId) {
       params.append('last_id', lastMessageId);
     }
+    const token = localStorage.getItem('token');
 
     const response = await fetch(`${API_URL}?${params.toString()}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
     });
 

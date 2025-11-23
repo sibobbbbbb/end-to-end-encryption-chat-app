@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { authMiddleware } from "@/shared/middlewares/auth.middleware";
 import { userController } from "@/container/index";
-import { generalApiLimiter } from "@/shared/middlewares/rate-limiter.middleware";
+// import { generalApiLimiter } from "@/shared/middlewares/rate-limiter.middleware";
 
 /**
  * @file User routes.
@@ -17,9 +17,9 @@ const userRouter = new Hono();
 userRouter.use("*", authMiddleware);
 
 // Rate limiter middleware for user routes
-userRouter.use("*", generalApiLimiter);
+// userRouter.use("*", generalApiLimiter);
 
 // Define user-related routes
-userRouter.get("/profile", userController.getMyProfile);
+userRouter.get("/:username", userController.getUserProfile);
 
 export default userRouter;

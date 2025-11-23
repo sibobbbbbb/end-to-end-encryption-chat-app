@@ -10,10 +10,12 @@ export interface UserProfile {
  */
 export const getContactProfile = async (username: string): Promise<UserProfile | null> => {
   try {
+    const token = localStorage.getItem('token');
     const res = await fetch(`${API_URL}/${username}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
     });
 

@@ -100,6 +100,7 @@ export default function ContactSidebar({ onSelectContact, selectedContact, curre
     e.stopPropagation(); // Prevent selecting contact when removing
     if (confirm(`Remove ${username} from contacts?`)) {
       setContacts(prev => prev.filter(c => c !== username));
+      localStorage.removeItem(`pubkey_${username}`);
     }
   };
 
