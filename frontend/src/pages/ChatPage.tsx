@@ -2,12 +2,12 @@ import { useState, useEffect, useRef, type KeyboardEvent } from 'react';
 import { ChatBubble } from '@/components/ChatBubble';
 import { TechnicalDetailsModal } from '@/components/TechnicalDetailsModal';
 import { KeyFingerprintModal } from '@/components/KeyFingerprintModal';
-import { processIncomingMessage, type ProcessedMessage, type IncomingMessagePayload } from '@/lib/messageHandler';
+import { processIncomingMessage, type ProcessedMessage } from '@/lib/messageHandler';
 import { encryptMessage, hashMessage, signMessage, computeKeyFingerprint } from '@/lib/crypto';
 import { getPrivateKey } from '@/services/authService';
 import { getContactProfile } from '@/services/userService';
 import { savePublicKey, getStoredPublicKey, trustNewKey } from '@/lib/keyStorage';
-import { sendMessage, pollMessages, type MessageResponse } from '@/services/messageService';
+import { sendMessage, pollMessages } from '@/services/messageService';
 
 interface ChatPageProps {
   currentUser: string;
@@ -79,7 +79,6 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
           savePublicKey(contactUsername, newPublicKey, fingerprint);
           
           setContactPublicKey(newPublicKey);
-          console.log(`Public key ${contactUsername} didapat:`, newPublicKey);
         } else {
           console.warn(`User ${contactUsername} tidak ditemukan.`);
         }
@@ -119,7 +118,6 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
               processedMessages.push(processed);
             } catch (error) {
               console.error("Failed to process message:", error);
-              // Continue processing other messages
             }
           }
           
@@ -253,7 +251,6 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
 
        try {
          await sendMessage(payloadToSend);
-         console.log("✅ Message sent successfully");
 
          // D. Update UI optimistically (message will also come via polling)
          const newMsg: ProcessedMessage = {

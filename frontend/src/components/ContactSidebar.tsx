@@ -11,18 +11,17 @@ interface ContactSidebarProps {
 const CONTACTS_STORAGE_KEY = 'chat_contacts';
 
 export default function ContactSidebar({ onSelectContact, selectedContact, currentUser }: ContactSidebarProps) {
-  // Load contacts from localStorage on mount
   const [contacts, setContacts] = useState<string[]>(() => {
     try {
       const stored = localStorage.getItem(CONTACTS_STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        return Array.isArray(parsed) ? parsed : ["teman_rahasia", "bos_besar"];
+        return Array.isArray(parsed) ? parsed : [];
       }
     } catch (error) {
       console.error("Failed to load contacts from storage:", error);
     }
-    return ["teman_rahasia", "bos_besar"]; // Default contacts
+    return [];
   });
 
   const [newContact, setNewContact] = useState("");
@@ -97,7 +96,7 @@ export default function ContactSidebar({ onSelectContact, selectedContact, curre
   };
 
   const handleRemoveContact = (username: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent selecting contact when removing
+    e.stopPropagation();
     if (confirm(`Remove ${username} from contacts?`)) {
       setContacts(prev => prev.filter(c => c !== username));
       localStorage.removeItem(`pubkey_${username}`);

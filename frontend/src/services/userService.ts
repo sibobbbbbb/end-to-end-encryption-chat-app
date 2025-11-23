@@ -23,38 +23,12 @@ export const getContactProfile = async (username: string): Promise<UserProfile |
       if (res.status === 404) {
         return null; // User not found
       }
-      // If endpoint doesn't exist (backend not ready), use fallback
-      if (res.status === 404 || res.status === 500) {
-        console.warn("Backend endpoint not available, using fallback mock data");
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            resolve({
-              username: username,
-              // Public key dummy (ganti dengan hex valid untuk tes dekripsi nyata)
-              publicKey: "047e634d4..." 
-            });
-          }, 500);
-        });
-      }
-      const errorData = await res.json().catch(() => ({ message: 'Failed to fetch user profile' }));
-      throw new Error(errorData.message || `HTTP ${res.status}: Failed to fetch user profile`);
+      throw new Error(`Server Error: ${res.status}`);
     }
 
     const data = await res.json();
     return data.data || data; // Support both { data: {...} } and direct response
   } catch (error) {
-    // Network error or backend not ready - use fallback for development
-    if (error instanceof TypeError || (error instanceof Error && error.message.includes('fetch'))) {
-      console.warn("Network error or backend not ready, using fallback mock data:", error);
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve({
-            username: username,
-            publicKey: "047e634d4..." 
-          });
-        }, 500);
-      });
-    }
     console.error("Failed to fetch user profile:", error);
     // Return null instead of throwing to allow graceful handling
     return null;
