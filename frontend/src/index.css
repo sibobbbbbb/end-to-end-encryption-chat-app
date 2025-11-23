@@ -39,9 +39,283 @@ html, body {
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    border-color: theme('colors.gray.200');
+    outline-color: theme('colors.blue.500', 0.5);
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-gray-900 text-white;
   }
+}
+
+/* Custom Animations for Auth Page - Cybersecurity Theme */
+
+/* Binary Rain Effect (Matrix Style) */
+@keyframes binary-fall {
+  0% {
+    transform: translateY(-100vh);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh);
+    opacity: 0;
+  }
+}
+
+.binary-rain {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  color: #3b82f6;
+  animation: binary-fall 8s linear infinite;
+  text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+/* Hexagonal Grid Pattern */
+.hex-grid {
+  background-image: 
+    linear-gradient(30deg, rgba(59, 130, 246, 0.1) 12%, transparent 12.5%, transparent 87%, rgba(59, 130, 246, 0.1) 87.5%, rgba(59, 130, 246, 0.1)),
+    linear-gradient(150deg, rgba(59, 130, 246, 0.1) 12%, transparent 12.5%, transparent 87%, rgba(59, 130, 246, 0.1) 87.5%, rgba(59, 130, 246, 0.1)),
+    linear-gradient(30deg, rgba(59, 130, 246, 0.1) 12%, transparent 12.5%, transparent 87%, rgba(59, 130, 246, 0.1) 87.5%, rgba(59, 130, 246, 0.1)),
+    linear-gradient(150deg, rgba(59, 130, 246, 0.1) 12%, transparent 12.5%, transparent 87%, rgba(59, 130, 246, 0.1) 87.5%, rgba(59, 130, 246, 0.1));
+  background-size: 80px 140px;
+  background-position: 0 0, 0 0, 40px 70px, 40px 70px;
+  animation: hex-move 20s linear infinite;
+}
+
+@keyframes hex-move {
+  0% {
+    background-position: 0 0, 0 0, 40px 70px, 40px 70px;
+  }
+  100% {
+    background-position: 80px 140px, 80px 140px, 120px 210px, 120px 210px;
+  }
+}
+
+/* Glowing Pulse Effects */
+@keyframes pulse-glow {
+  0%, 100% {
+    transform: scale(1) translateY(0);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.2) translateY(-20px);
+    opacity: 0.5;
+  }
+}
+
+@keyframes pulse-glow-delay {
+  0%, 100% {
+    transform: scale(1) translateX(0);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.3) translateX(20px);
+    opacity: 0.6;
+  }
+}
+
+@keyframes pulse-glow-slow {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.2;
+  }
+  50% {
+    transform: scale(1.4) rotate(180deg);
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 6s ease-in-out infinite;
+}
+
+.animate-pulse-glow-delay {
+  animation: pulse-glow-delay 7s ease-in-out infinite;
+}
+
+.animate-pulse-glow-slow {
+  animation: pulse-glow-slow 10s ease-in-out infinite;
+}
+
+/* Scanning Lines */
+@keyframes scan {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100vh);
+  }
+}
+
+@keyframes scan-slow {
+  0% {
+    transform: translateY(100vh);
+  }
+  100% {
+    transform: translateY(-100%);
+  }
+}
+
+.scan-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  animation: scan 3s linear infinite;
+}
+
+.scan-line-slow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  animation: scan-slow 5s linear infinite;
+}
+
+/* Floating Icons */
+@keyframes float-icon {
+  0%, 100% {
+    transform: translateY(0) translateX(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-20px) translateX(10px) rotate(5deg);
+  }
+  50% {
+    transform: translateY(-10px) translateX(-10px) rotate(-5deg);
+  }
+  75% {
+    transform: translateY(-25px) translateX(5px) rotate(3deg);
+  }
+}
+
+@keyframes float-icon-delay {
+  0%, 100% {
+    transform: translateY(0) translateX(0) scale(1);
+  }
+  33% {
+    transform: translateY(15px) translateX(-15px) scale(1.1);
+  }
+  66% {
+    transform: translateY(-15px) translateX(15px) scale(0.9);
+  }
+}
+
+@keyframes float-icon-slow {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  50% {
+    transform: translateY(-30px) rotate(360deg) scale(1.15);
+  }
+}
+
+.animate-float-icon {
+  animation: float-icon 5s ease-in-out infinite;
+}
+
+.animate-float-icon-delay {
+  animation: float-icon-delay 6s ease-in-out infinite;
+}
+
+.animate-float-icon-slow {
+  animation: float-icon-slow 8s ease-in-out infinite;
+}
+
+/* Circuit Path Animations */
+@keyframes circuit-draw {
+  0% {
+    stroke-dashoffset: 2000;
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0.3;
+  }
+}
+
+@keyframes circuit-pulse {
+  0%, 100% {
+    r: 4;
+    opacity: 1;
+  }
+  50% {
+    r: 8;
+    opacity: 0.5;
+  }
+}
+
+.circuit-path {
+  stroke-dasharray: 2000;
+  animation: circuit-draw 4s ease-in-out infinite;
+}
+
+.circuit-path-delay {
+  stroke-dasharray: 2000;
+  animation: circuit-draw 5s ease-in-out infinite 1s;
+}
+
+.circuit-dot {
+  animation: circuit-pulse 2s ease-in-out infinite;
+}
+
+.circuit-dot-delay {
+  animation: circuit-pulse 2s ease-in-out infinite 1s;
+}
+
+/* Data Particles */
+@keyframes ping-slow {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  75%, 100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+.animate-ping-slow {
+  animation: ping-slow 3s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Card Entrance */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out;
+}
+
+/* Glowing Border Pulse */
+@keyframes glow-pulse {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 3s ease-in-out infinite;
 }

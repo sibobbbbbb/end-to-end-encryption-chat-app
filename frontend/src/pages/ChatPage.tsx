@@ -152,22 +152,53 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-100">
+    <div className="flex flex-col h-full bg-gradient-to-br from-gray-800 to-gray-900">
       {/* Header Chat */}
-      <div className="bg-white p-4 shadow-sm border-b flex justify-between items-center">
-        <div>
-            <div className="font-bold text-gray-800">{contactUsername}</div>
-            <div className="text-xs text-green-600 flex items-center gap-1">
-                {isKeyLoading ? "Mengambil kunci..." : "● Encrypted Connection Established"}
+      <div className="bg-gray-800/80 backdrop-blur-sm p-5 shadow-md border-b border-gray-700/50 flex justify-between items-center">
+        <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="bg-gradient-to-br from-blue-400 to-purple-400 p-3 rounded-full">
+                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></span>
+            </div>
+            <div>
+              <div className="font-bold text-gray-100 text-lg">{contactUsername}</div>
+              <div className="text-xs text-green-400 flex items-center gap-1">
+                  {isKeyLoading ? (
+                    <span className="flex items-center gap-1">
+                      <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Securing connection...
+                    </span>
+                  ) : (
+                    <>
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                      </svg>
+                      End-to-end encrypted
+                    </>
+                  )}
+              </div>
             </div>
         </div>
       </div>
 
       {/* Area Chat */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-700">
         {messages.length === 0 && (
-            <div className="h-full flex flex-col items-center justify-center text-gray-400 opacity-60">
-                <p>Belum ada riwayat pesan.</p>
+            <div className="h-full flex flex-col items-center justify-center text-gray-500 opacity-60">
+                <div className="bg-gradient-to-br from-gray-700 to-gray-800 p-6 rounded-2xl mb-4 border border-gray-600">
+                  <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                </div>
+                <p className="text-gray-400 font-medium">No messages yet</p>
+                <p className="text-sm text-gray-500">Start your encrypted conversation</p>
             </div>
         )}
         {messages.map((msg) => (
@@ -183,22 +214,25 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
       </div>
 
       {/* Input Area */}
-      <div className="p-4 bg-white border-t">
-        <div className="flex gap-2">
+      <div className="p-5 bg-gray-800/90 backdrop-blur-sm border-t border-gray-700 shadow-lg">
+        <div className="flex gap-3 items-end">
             <input
-            className="flex-1 p-3 rounded-lg border border-gray-300 bg-gray-50 text-black focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            className="flex-1 p-4 rounded-2xl border-2 border-gray-600 bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 transition-all"
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            placeholder={isKeyLoading ? "Menunggu kunci..." : `Kirim pesan ke ${contactUsername}...`}
+            placeholder={isKeyLoading ? "Securing connection..." : `Message ${contactUsername}...`}
             disabled={isKeyLoading || !contactPublicKey}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
             />
             <button 
             onClick={handleSend}
-            disabled={isKeyLoading || !contactPublicKey}
-            className="bg-blue-600 text-white px-6 rounded-lg font-bold hover:bg-blue-700 disabled:bg-gray-400 transition-colors"
+            disabled={isKeyLoading || !contactPublicKey || !inputText.trim()}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-2xl font-bold hover:from-blue-700 hover:to-purple-700 disabled:from-gray-300 disabled:to-gray-400 transition-all shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none flex items-center gap-2"
             >
-            Kirim
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
+            Send
             </button>
         </div>
       </div>
