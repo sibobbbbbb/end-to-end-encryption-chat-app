@@ -25,17 +25,24 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ text, sender, isMe, stat
   const config = getStatusConfig();
 
   return (
-    <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-in slide-in-from-bottom-2 duration-300`}>
-      <div className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-md ${
-        isMe 
-          ? 'bg-gradient-to-br from-blue-600 to-purple-600 text-white' 
-          : 'bg-gray-700 text-gray-100 border border-gray-600'
-      }`}>
+    <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-in slide-in-from-bottom-2 duration-300 w-full px-2`}>
+      <div 
+        className={`max-w-[70%] min-w-[120px] rounded-2xl px-4 py-3 shadow-md ${ 
+          isMe 
+            ? 'bg-gradient-to-br from-blue-600 to-purple-600 text-white' 
+            : 'bg-gray-700 text-gray-100 border border-gray-600'
+        }`}
+        style={{ 
+          wordBreak: 'break-word',
+          overflowWrap: 'anywhere',
+          whiteSpace: 'pre-wrap'
+        }}
+      >
         {/* Header: Sender Name */}
         {!isMe && <div className="text-xs font-bold mb-1.5 text-gray-400">{sender}</div>}
         
         {/* Message Body */}
-        <p className="break-words leading-relaxed text-[15px]">{text}</p>
+        <p className="leading-relaxed text-[15px]">{text}</p>
         
         {/* Footer: Timestamp & Security Status */}
         <div className={`flex items-center gap-2 mt-2 pt-2 ${isMe ? 'border-t border-white/20' : 'border-t border-gray-600'}`}>

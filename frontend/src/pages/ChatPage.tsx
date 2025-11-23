@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, type KeyboardEvent } from 'react';
 import { ChatBubble } from '@/components/ChatBubble';
 import { processIncomingMessage, type ProcessedMessage, type IncomingMessagePayload } from '@/lib/messageHandler';
 import { encryptMessage, hashMessage, signMessage } from '@/lib/crypto';
@@ -15,6 +15,25 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
   const [inputText, setInputText] = useState("");
   const [contactPublicKey, setContactPublicKey] = useState<string | null>(null);
   const [isKeyLoading, setIsKeyLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-scroll ke pesan terbaru
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = Math.min(textarea.scrollHeight, 150) + 'px';
+    }
+  }, [inputText]);
 
   // 1. Fetch Public Key Lawan saat kontak berubah
   useEffect(() => {
@@ -144,10 +163,22 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
        
        setMessages(prev => [...prev, newMsg]);
        setInputText("");
+       
+       // Reset textarea height
+       if (textareaRef.current) {
+         textareaRef.current.style.height = 'auto';
+       }
 
     } catch (e) {
        console.error("Send Error:", e);
        alert("Gagal memproses pesan.");
+    }
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
     }
   };
 
@@ -189,7 +220,7 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
       </div>
 
       {/* Area Chat */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin scrollbar-thumb-gray-700">
+      <div className="flex-1 overflow-y-auto py-6 px-6 space-y-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         {messages.length === 0 && (
             <div className="h-full flex flex-col items-center justify-center text-gray-500 opacity-60">
                 <div className="bg-gradient-to-br from-gray-700 to-gray-800 p-6 rounded-2xl mb-4 border border-gray-600">
@@ -211,23 +242,27 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
             timestamp={msg.timestamp}
           />
         ))}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Input Area */}
       <div className="p-5 bg-gray-800/90 backdrop-blur-sm border-t border-gray-700 shadow-lg">
         <div className="flex gap-3 items-end">
-            <input
-            className="flex-1 p-4 rounded-2xl border-2 border-gray-600 bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 transition-all"
+            <textarea
+            ref={textareaRef}
+            rows={1}
+            className="flex-1 px-4 py-3 rounded-2xl border-2 border-gray-600 bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 transition-all resize-none overflow-y-auto leading-relaxed"
+            style={{ minHeight: '52px', maxHeight: '150px' }}
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            placeholder={isKeyLoading ? "Securing connection..." : `Message ${contactUsername}...`}
+            placeholder={isKeyLoading ? "Securing connection..." : `Message ${contactUsername}... (Shift+Enter for new line)`}
             disabled={isKeyLoading || !contactPublicKey}
-            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
+            onKeyDown={handleKeyDown}
             />
             <button 
             onClick={handleSend}
             disabled={isKeyLoading || !contactPublicKey || !inputText.trim()}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-2xl font-bold hover:from-blue-700 hover:to-purple-700 disabled:from-gray-300 disabled:to-gray-400 transition-all shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none flex items-center gap-2"
+            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-2xl font-bold hover:from-blue-700 hover:to-purple-700 disabled:from-gray-300 disabled:to-gray-400 transition-all shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none flex items-center gap-2 cursor-pointer disabled:cursor-not-allowed"
             >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />

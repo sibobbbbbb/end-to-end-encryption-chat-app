@@ -162,7 +162,7 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 py-3.5 text-white font-bold hover:from-blue-700 hover:to-purple-700 disabled:from-gray-300 disabled:to-gray-400 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none"
+            className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 py-3.5 text-white font-bold hover:from-blue-700 hover:to-purple-700 disabled:from-gray-300 disabled:to-gray-400 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none cursor-pointer disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <span className="flex items-center justify-center gap-2">
@@ -186,7 +186,7 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
                 setUsername("");
                 setPassword("");
             }}
-            className="text-sm font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all"
+            className="text-sm font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all cursor-pointer"
           >
             {isLogin ? "Sign up for free →" : "← Back to sign in"}
           </button>

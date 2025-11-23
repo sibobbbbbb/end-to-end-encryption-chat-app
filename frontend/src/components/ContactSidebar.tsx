@@ -33,7 +33,7 @@ export default function ContactSidebar({ onSelectContact, selectedContact }: Con
           <button
             key={contact}
             onClick={() => onSelectContact(contact)}
-            className={`w-full text-left p-4 rounded-xl flex items-center gap-3 transition-all duration-200 ${
+            className={`w-full text-left p-4 rounded-xl flex items-center gap-3 transition-all duration-200 cursor-pointer ${
               selectedContact === contact 
                 ? 'bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg scale-105' 
                 : 'hover:bg-gray-700/50 hover:scale-102'
@@ -68,7 +68,7 @@ export default function ContactSidebar({ onSelectContact, selectedContact }: Con
           />
           <button 
             onClick={handleAddContact}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 p-2.5 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+            className="bg-gradient-to-r from-blue-600 to-purple-600 p-2.5 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105 cursor-pointer"
           >
             <Plus size={20} />
           </button>

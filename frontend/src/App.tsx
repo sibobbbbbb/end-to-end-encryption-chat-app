@@ -80,7 +80,7 @@ function App() {
             </div>
             <button 
             onClick={handleLogout}
-            className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-2.5 rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+            className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-2.5 rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:scale-105 cursor-pointer"
             title="Logout"
             >
             <LogOut size={18} />
