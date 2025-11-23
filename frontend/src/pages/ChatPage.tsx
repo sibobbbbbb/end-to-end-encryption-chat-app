@@ -7,6 +7,7 @@ import { encryptMessage, hashMessage, signMessage, computeKeyFingerprint } from 
 import { getPrivateKey } from '@/services/authService';
 import { getContactProfile } from '@/services/userService';
 import { savePublicKey, getStoredPublicKey, trustNewKey } from '@/lib/keyStorage';
+import { sendMessage, pollMessages, type MessageResponse } from '@/services/messageService';
 
 interface ChatPageProps {
   currentUser: string;
@@ -19,12 +20,16 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
   const [contactPublicKey, setContactPublicKey] = useState<string | null>(null);
   const [previousPublicKey, setPreviousPublicKey] = useState<string | null>(null);
   const [isKeyLoading, setIsKeyLoading] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
   const [selectedMessageForDetails, setSelectedMessageForDetails] = useState<ProcessedMessage | null>(null);
   const [showFingerprintModal, setShowFingerprintModal] = useState(false);
   const [showKeyChangeAlert, setShowKeyChangeAlert] = useState(false);
   const [showVerificationInfo, setShowVerificationInfo] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const lastPollTimestampRef = useRef<string | null>(null);
 
   // Auto-scroll ke pesan terbaru
   const scrollToBottom = () => {
@@ -86,58 +91,126 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
     fetchKey();
   }, [contactUsername]);
 
-  // 2. Simulasi Polling Pesan (Hanya jalan jika Public Key sudah ada)
+  // 2. Polling Pesan (Hanya jalan jika Public Key sudah ada)
   useEffect(() => {
     if (!contactPublicKey) return;
 
-    const interval = setInterval(async () => {
-      // Payload Dummy (Simulasi)
-      // Di real app, fetch('/api/messages?partner=' + contactUsername)
-      const dummyIncomingPayload: IncomingMessagePayload = {
-        sender_username: contactUsername,
-        encrypted_message: JSON.stringify({ iv: [], data: [] }), // Mock encrypted data
-        message_hash: "hash_dummy",
-        signature: { r: "sig_r", s: "sig_s" },
-        timestamp: new Date().toISOString()
-      };
-
+    // Load initial messages
+    const loadInitialMessages = async () => {
+      setIsLoadingMessages(true);
       try {
-        const processed = await processIncomingMessage(
-          dummyIncomingPayload, 
-          contactPublicKey, 
-          currentUser
+        const fetchedMessages = await pollMessages(contactUsername);
+        if (fetchedMessages.length > 0) {
+          const processedMessages: ProcessedMessage[] = [];
+          
+          for (const msg of fetchedMessages) {
+            try {
+              const processed = await processIncomingMessage(
+                {
+                  sender_username: msg.sender_username,
+                  encrypted_message: msg.encrypted_message,
+                  message_hash: msg.message_hash,
+                  signature: msg.signature,
+                  timestamp: msg.timestamp
+                },
+                contactPublicKey,
+                currentUser
+              );
+              processedMessages.push(processed);
+            } catch (error) {
+              console.error("Failed to process message:", error);
+              // Continue processing other messages
+            }
+          }
+          
+          setMessages(processedMessages);
+          if (processedMessages.length > 0) {
+            lastPollTimestampRef.current = processedMessages[processedMessages.length - 1].timestamp;
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load messages:", error);
+      } finally {
+        setIsLoadingMessages(false);
+      }
+    };
+
+    loadInitialMessages();
+
+    // Poll for new messages every 3 seconds
+    const interval = setInterval(async () => {
+      try {
+        const fetchedMessages = await pollMessages(
+          contactUsername,
+          lastPollTimestampRef.current || undefined
         );
 
-        // Masukkan ke state (Simulasi: hanya jika valid/belum ada)
-        setMessages(prev => {
-            const exists = prev.some(m => m.timestamp === processed.timestamp);
-            // Di real app, validasi 'verified' sangat penting. Di demo ini kita skip biar gak flooding.
-            if (!exists && processed.status === 'verified') { 
-                return [...prev, processed];
+        if (fetchedMessages.length > 0) {
+          const newProcessedMessages: ProcessedMessage[] = [];
+          
+          for (const msg of fetchedMessages) {
+            try {
+              const processed = await processIncomingMessage(
+                {
+                  sender_username: msg.sender_username,
+                  encrypted_message: msg.encrypted_message,
+                  message_hash: msg.message_hash,
+                  signature: msg.signature,
+                  timestamp: msg.timestamp
+                },
+                contactPublicKey,
+                currentUser
+              );
+              newProcessedMessages.push(processed);
+            } catch (error) {
+              console.error("Failed to process message:", error);
             }
-            return prev;
-        });
-      } catch {
-        // Silent catch untuk polling
+          }
+
+          if (newProcessedMessages.length > 0) {
+            setMessages(prev => {
+              // Filter out duplicates based on timestamp
+              const existingTimestamps = new Set(prev.map(m => m.timestamp));
+              const uniqueNew = newProcessedMessages.filter(m => !existingTimestamps.has(m.timestamp));
+              
+              if (uniqueNew.length > 0) {
+                lastPollTimestampRef.current = uniqueNew[uniqueNew.length - 1].timestamp;
+                return [...prev, ...uniqueNew];
+              }
+              return prev;
+            });
+          }
+        }
+      } catch (error) {
+        // Silent catch untuk polling - errors are logged but don't break the app
+        console.warn("Polling error:", error);
       }
-    }, 5000); 
+    }, 3000); // Poll every 3 seconds
 
     return () => clearInterval(interval);
   }, [currentUser, contactUsername, contactPublicKey]); 
 
   // 3. Handle Kirim Pesan
   const handleSend = async () => {
-    if (!inputText.trim()) return;
+    if (!inputText.trim() || isSending) return;
     
     if (!contactPublicKey) {
-        alert("Failed to get recipient's encryption key. Check connection or user may be invalid.");
+        setSendError("Failed to get recipient's encryption key. Check connection or user may be invalid.");
+        setTimeout(() => setSendError(null), 5000);
         return;
     }
+
+    setIsSending(true);
+    setSendError(null);
+    const messageText = inputText.trim();
+    setInputText(""); // Clear input immediately for better UX
 
     try {
        const myPrivateKey = getPrivateKey(currentUser);
        if (!myPrivateKey) {
-           alert("Invalid session (Private Key missing). Please login again.");
+           setSendError("Invalid session (Private Key missing). Please login again.");
+           setTimeout(() => setSendError(null), 5000);
+           setIsSending(false);
            return;
        }
 
@@ -146,7 +219,7 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
        const rawPayload = JSON.stringify({
            sender: currentUser,
            receiver: contactUsername,
-           msg: inputText,
+           msg: messageText,
            ts: timestamp
        });
        const msgHash = hashMessage(rawPayload); 
@@ -158,12 +231,14 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
          encryptedMessage = await encryptMessage(
              myPrivateKey, 
              contactPublicKey, 
-             inputText
+             messageText
          );
        } catch (e) {
-         // Fallback untuk demo jika key dummy
-         console.warn("Enkripsi real gagal (key dummy?), mengirim placeholder.", e);
-         encryptedMessage = "ENCRYPTED_PLACEHOLDER"; 
+         setSendError("Encryption failed. Please try again.");
+         setTimeout(() => setSendError(null), 5000);
+         setIsSending(false);
+         setInputText(messageText); // Restore message text
+         return;
        }
 
        // C. Kirim ke Server
@@ -176,21 +251,31 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
            timestamp: timestamp
        };
 
-       console.log("🚀 Sending Secure Message:", payloadToSend);
-       // await fetch('/api/messages', ...)
+       try {
+         await sendMessage(payloadToSend);
+         console.log("✅ Message sent successfully");
 
-       // D. Update UI
-       const newMsg: ProcessedMessage = {
-         id: crypto.randomUUID(),
-         sender: currentUser,
-         text: inputText,
-         timestamp: timestamp,
-         isVerified: true,
-         status: 'verified'
-       };
-       
-       setMessages(prev => [...prev, newMsg]);
-       setInputText("");
+         // D. Update UI optimistically (message will also come via polling)
+         const newMsg: ProcessedMessage = {
+           id: crypto.randomUUID(),
+           sender: currentUser,
+           text: messageText,
+           timestamp: timestamp,
+           isVerified: true,
+           status: 'verified'
+         };
+         
+         setMessages(prev => [...prev, newMsg]);
+       } catch (sendError) {
+         // Restore message text on send failure
+         setInputText(messageText);
+         const errorMessage = sendError instanceof Error 
+           ? sendError.message 
+           : "Failed to send message. Please check your connection and try again.";
+         setSendError(errorMessage);
+         setTimeout(() => setSendError(null), 5000);
+         throw sendError;
+       }
        
        // Reset textarea height
        if (textareaRef.current) {
@@ -199,7 +284,9 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
 
     } catch (e) {
        console.error("Send Error:", e);
-       alert("Failed to process message.");
+       // Error already handled above
+    } finally {
+       setIsSending(false);
     }
   };
 
@@ -362,7 +449,18 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
 
       {/* Area Chat */}
       <div className="flex-1 overflow-y-auto py-6 px-6 space-y-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-        {messages.length === 0 && (
+        {isLoadingMessages && messages.length === 0 && (
+          <div className="h-full flex flex-col items-center justify-center text-gray-500 opacity-60">
+            <div className="bg-gradient-to-br from-gray-700 to-gray-800 p-6 rounded-2xl mb-4 border border-gray-600">
+              <svg className="animate-spin h-12 w-12 text-blue-400" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </div>
+            <p className="text-gray-400 font-medium">Loading messages...</p>
+          </div>
+        )}
+        {!isLoadingMessages && messages.length === 0 && (
             <div className="h-full flex flex-col items-center justify-center text-gray-500 opacity-60">
                 <div className="bg-gradient-to-br from-gray-700 to-gray-800 p-6 rounded-2xl mb-4 border border-gray-600">
                   <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -403,6 +501,23 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
 
       {/* Input Area */}
       <div className="p-5 bg-gray-800/90 backdrop-blur-sm border-t border-gray-700 shadow-lg">
+        {/* Error Message */}
+        {sendError && (
+          <div className="mb-3 flex items-center gap-2 text-xs text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2">
+            <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            <span>{sendError}</span>
+            <button
+              onClick={() => setSendError(null)}
+              className="ml-auto text-red-300 hover:text-red-200 cursor-pointer"
+            >
+              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
+        )}
         <div className="flex gap-3 items-end">
             <textarea
             ref={textareaRef}
@@ -411,19 +526,31 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
             style={{ minHeight: '52px', maxHeight: '150px' }}
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            placeholder={isKeyLoading ? "Securing connection..." : `Message ${contactUsername}... (Shift+Enter for new line)`}
-            disabled={isKeyLoading || !contactPublicKey}
+            placeholder={isKeyLoading ? "Securing connection..." : isSending ? "Sending message..." : `Message ${contactUsername}... (Shift+Enter for new line)`}
+            disabled={isKeyLoading || !contactPublicKey || isSending}
             onKeyDown={handleKeyDown}
             />
             <button 
             onClick={handleSend}
-            disabled={isKeyLoading || !contactPublicKey || !inputText.trim()}
+            disabled={isKeyLoading || !contactPublicKey || !inputText.trim() || isSending}
             className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-2xl font-bold hover:from-blue-700 hover:to-purple-700 disabled:from-gray-300 disabled:to-gray-400 transition-all shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none flex items-center gap-2 cursor-pointer disabled:cursor-not-allowed"
             >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-            </svg>
-            Send
+            {isSending ? (
+              <>
+                <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Sending...
+              </>
+            ) : (
+              <>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
+                Send
+              </>
+            )}
             </button>
         </div>
       </div>

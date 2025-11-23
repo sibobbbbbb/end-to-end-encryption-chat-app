@@ -93,7 +93,8 @@ function App() {
         {/* Sidebar */}
         <ContactSidebar 
           selectedContact={selectedContact} 
-          onSelectContact={setSelectedContact} 
+          onSelectContact={setSelectedContact}
+          currentUser={currentUser}
         />
 
         {/* Chat Area */}
