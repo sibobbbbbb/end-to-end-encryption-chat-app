@@ -70,9 +70,21 @@ export const KeyFingerprintModal: React.FC<KeyFingerprintModalProps> = ({
     setTimeout(() => setCopiedField(null), 2000);
   };
 
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden border border-gray-700">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      onClick={handleBackdropClick}
+    >
+      <div 
+        className="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden border border-gray-700"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className={`p-6 flex items-center justify-between ${hasKeyChanged ? 'bg-gradient-to-r from-red-600 to-orange-600' : 'bg-gradient-to-r from-blue-600 to-purple-600'}`}>
           <div>
@@ -206,14 +218,8 @@ export const KeyFingerprintModal: React.FC<KeyFingerprintModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="bg-gray-800 p-4 border-t border-gray-700 flex justify-between items-center">
-          <button
-            onClick={onClose}
-            className="bg-gray-700 text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-600 transition-all cursor-pointer"
-          >
-            Close
-          </button>
-          {hasKeyChanged && onTrustKey && (
+        {hasKeyChanged && onTrustKey && (
+          <div className="bg-gray-800 p-4 border-t border-gray-700 flex justify-end">
             <button
               onClick={() => {
                 onTrustKey();
@@ -223,8 +229,8 @@ export const KeyFingerprintModal: React.FC<KeyFingerprintModalProps> = ({
             >
               Trust New Key
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
