@@ -1,5 +1,5 @@
-const API_URL = '/api/users';
-
+const BASE_URL = import.meta.env.VITE_API_URL || '/api'; 
+const API_URL = `${BASE_URL}/users`;
 export interface UserProfile {
   username: string;
   publicKey: string;

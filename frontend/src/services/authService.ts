@@ -1,7 +1,8 @@
 import { generateKeyPairFromPassword, signMessage, hashMessage } from '@/lib/crypto';
 
 // Gunakan proxy yang sudah diset di vite.config.ts
-const API_URL = '/api/auth'; 
+const BASE_URL = import.meta.env.VITE_API_URL || '/api'; 
+const API_URL = `${BASE_URL}/auth`;
 
 // Helper untuk menyimpan Private Key di Local Storage (Sesuai Spek Tahap 1)
 export const saveKeys = (username: string, privateKey: string) => {

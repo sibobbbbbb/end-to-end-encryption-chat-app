@@ -1,4 +1,5 @@
-const API_URL = '/api/messages';
+const BASE_URL = import.meta.env.VITE_API_URL || '/api'; 
+const API_URL = `${BASE_URL}/messages`;
 
 export interface SendMessagePayload {
   sender_username: string;
