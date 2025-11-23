@@ -1,6 +1,6 @@
-import { UserRepository } from "@/shared/repositories/user.repository";
-import { NotFoundError } from "@/shared/exceptions/api-error";
-import { User } from "@/shared/models/user.model";
+import { UserRepository } from '@/modules/user/user.repository';
+import { NotFoundError } from '@/shared/exceptions/api-error';
+import { User } from '@/shared/models/user.model';
 
 /**
  * @class UserService
@@ -22,7 +22,7 @@ export class UserService {
     const user = await this.userRepository.findByUsername(username);
 
     if (!user) {
-      throw new NotFoundError("User not found");
+      throw new NotFoundError('User not found');
     }
 
     return user;
