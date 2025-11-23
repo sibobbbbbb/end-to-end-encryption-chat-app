@@ -2,12 +2,15 @@ import { useState, useEffect, useRef, type KeyboardEvent } from 'react';
 import { ChatBubble } from '@/components/ChatBubble';
 import { TechnicalDetailsModal } from '@/components/TechnicalDetailsModal';
 import { KeyFingerprintModal } from '@/components/KeyFingerprintModal';
+import { DeveloperMode } from '@/components/DeveloperMode';
+import { ToastContainer, useToast, showToast } from '@/components/Toast';
 import { processIncomingMessage, type ProcessedMessage, type IncomingMessagePayload } from '@/lib/messageHandler';
 import { encryptMessage, hashMessage, signMessage, computeKeyFingerprint } from '@/lib/crypto';
 import { getPrivateKey } from '@/services/authService';
 import { getContactProfile } from '@/services/userService';
 import { savePublicKey, getStoredPublicKey, trustNewKey } from '@/lib/keyStorage';
-import { sendMessage, pollMessages, type MessageResponse } from '@/services/messageService';
+import { sendMessage, pollMessages } from '@/services/messageService';
+import { TestTube } from 'lucide-react';
 
 interface ChatPageProps {
   currentUser: string;
@@ -27,9 +30,11 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
   const [showFingerprintModal, setShowFingerprintModal] = useState(false);
   const [showKeyChangeAlert, setShowKeyChangeAlert] = useState(false);
   const [showVerificationInfo, setShowVerificationInfo] = useState(false);
+  const [showDeveloperMode, setShowDeveloperMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const lastPollTimestampRef = useRef<string | null>(null);
+  const { toasts, removeToast } = useToast();
 
   // Auto-scroll ke pesan terbaru
   const scrollToBottom = () => {
@@ -59,8 +64,40 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
 
       try {
         const profile = await getContactProfile(contactUsername);
-        if (profile) {
-          const newPublicKey = profile.publicKey;
+        let newPublicKey: string | null = null;
+        
+        if (profile && profile.publicKey) {
+          newPublicKey = profile.publicKey;
+        } else {
+          // If profile is null or has no public key, generate fallback key
+          console.warn(`❌ User ${contactUsername} tidak ditemukan atau tidak ada public key. Using fallback...`);
+          // Import generateDummyPublicKey from userService (we'll need to export it)
+          // For now, use stored key if available, otherwise generate new one
+          const storedKeyInfo = getStoredPublicKey(contactUsername);
+          if (storedKeyInfo && storedKeyInfo.publicKey) {
+            newPublicKey = storedKeyInfo.publicKey;
+            console.log(`Using stored public key for ${contactUsername}`);
+          } else {
+            // Generate a dummy key using the same method as userService
+            const { ec } = await import('elliptic');
+            const { sha3_256 } = await import('js-sha3');
+            const EC = ec;
+            const ecInstance = new EC('secp256k1');
+            const seed = `dummy_key_${contactUsername}`;
+            const privateKeyHex = sha3_256(seed);
+            const key = ecInstance.keyFromPrivate(privateKeyHex);
+            newPublicKey = key.getPublic('hex');
+            console.log(`Generated fallback public key for ${contactUsername}`);
+          }
+        }
+        
+        if (newPublicKey) {
+          // Validate public key format (should be hex string)
+          if (newPublicKey.length < 10) {
+            console.error(`Invalid public key received for ${contactUsername}:`, newPublicKey);
+            showToast(`Failed to get valid public key for ${contactUsername}`, 'error');
+            return;
+          }
           
           // Cek apakah key berubah
           const storedKeyInfo = getStoredPublicKey(contactUsername);
@@ -79,10 +116,14 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
           savePublicKey(contactUsername, newPublicKey, fingerprint);
           
           setContactPublicKey(newPublicKey);
-          console.log(`Public key ${contactUsername} didapat:`, newPublicKey);
+          console.log(`✅ Public key ${contactUsername} didapat:`, newPublicKey.substring(0, 20) + '...');
         } else {
-          console.warn(`User ${contactUsername} tidak ditemukan.`);
+          console.error(`❌ Failed to get or generate public key for ${contactUsername}`);
+          showToast(`Failed to get public key for ${contactUsername}`, 'error');
         }
+      } catch (error) {
+        console.error(`Error fetching profile for ${contactUsername}:`, error);
+        showToast(`Error loading contact ${contactUsername}`, 'error');
       } finally {
         setIsKeyLoading(false);
       }
@@ -195,8 +236,7 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
     if (!inputText.trim() || isSending) return;
     
     if (!contactPublicKey) {
-        setSendError("Failed to get recipient's encryption key. Check connection or user may be invalid.");
-        setTimeout(() => setSendError(null), 5000);
+        showToast("Failed to get recipient's encryption key. Check connection or user may be invalid.", 'error');
         return;
     }
 
@@ -208,8 +248,7 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
     try {
        const myPrivateKey = getPrivateKey(currentUser);
        if (!myPrivateKey) {
-           setSendError("Invalid session (Private Key missing). Please login again.");
-           setTimeout(() => setSendError(null), 5000);
+           showToast("Invalid session (Private Key missing). Please login again.", 'error');
            setIsSending(false);
            return;
        }
@@ -233,9 +272,8 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
              contactPublicKey, 
              messageText
          );
-       } catch (e) {
-         setSendError("Encryption failed. Please try again.");
-         setTimeout(() => setSendError(null), 5000);
+       } catch {
+         showToast("Encryption failed. Please try again.", 'error');
          setIsSending(false);
          setInputText(messageText); // Restore message text
          return;
@@ -272,8 +310,7 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
          const errorMessage = sendError instanceof Error 
            ? sendError.message 
            : "Failed to send message. Please check your connection and try again.";
-         setSendError(errorMessage);
-         setTimeout(() => setSendError(null), 5000);
+         showToast(errorMessage, 'error');
          throw sendError;
        }
        
@@ -297,10 +334,31 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
     }
   };
 
+  // Handler untuk inject tampered message dari Developer Mode
+  const handleInjectMessage = async (payload: IncomingMessagePayload) => {
+    if (!contactPublicKey) {
+      showToast("Contact public key not available", 'error');
+      return;
+    }
+
+    try {
+      const processed = await processIncomingMessage(
+        payload,
+        contactPublicKey,
+        currentUser
+      );
+      setMessages(prev => [...prev, processed]);
+      showToast("Tampered message injected. Verification should fail.", 'warning');
+    } catch (error) {
+      console.error("Failed to process injected message:", error);
+      showToast("Failed to inject message", 'error');
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-gray-800 to-gray-900">
       {/* Header Chat */}
-      <div className="bg-gray-800/80 backdrop-blur-sm p-5 shadow-md border-b border-gray-700/50 flex justify-between items-center">
+      <div className="bg-gray-800/80 backdrop-blur-sm p-3 sm:p-5 shadow-md border-b border-gray-700/50 flex justify-between items-center flex-wrap gap-2">
         <div className="flex items-center gap-3">
             <div className="relative">
               <div className="bg-gradient-to-br from-blue-400 to-purple-400 p-3 rounded-full">
@@ -310,8 +368,8 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
               </div>
               <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></span>
             </div>
-            <div className="flex-1">
-              <div className="font-bold text-gray-100 text-lg">{contactUsername}</div>
+            <div className="flex-1 min-w-0">
+              <div className="font-bold text-gray-100 text-base sm:text-lg truncate">{contactUsername}</div>
               <div className="text-xs text-green-400 flex items-center gap-1">
                   {isKeyLoading ? (
                     <span className="flex items-center gap-1">
@@ -341,18 +399,37 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
               )}
             </div>
         </div>
-        {!isKeyLoading && contactPublicKey && (
-          <button
-            onClick={() => setShowFingerprintModal(true)}
-            className="text-xs text-gray-400 hover:text-white px-3 py-1.5 rounded-lg border border-gray-600 hover:border-gray-500 transition-all flex items-center gap-2 cursor-pointer"
-            title="View key fingerprint"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-            Fingerprint
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {/* Developer Mode - Always available for testing, even without public key */}
+          {!isKeyLoading && (
+            <button
+              onClick={() => setShowDeveloperMode(true)}
+              className={`text-xs px-2 sm:px-3 py-1.5 rounded-lg border transition-all flex items-center gap-1 sm:gap-2 cursor-pointer ${
+                contactPublicKey
+                  ? 'text-purple-400 hover:text-purple-300 border-purple-600/50 hover:border-purple-500'
+                  : 'text-purple-300/70 hover:text-purple-300 border-purple-600/30 hover:border-purple-500/50'
+              }`}
+              title="Developer Mode - Test Panel (Spesifikasi 3.d)"
+            >
+              <TestTube size={14} />
+              <span className="hidden sm:inline md:hidden">Dev</span>
+              <span className="hidden md:inline">Developer Mode</span>
+            </button>
+          )}
+          {/* Fingerprint - Only show if public key available */}
+          {!isKeyLoading && contactPublicKey && (
+            <button
+              onClick={() => setShowFingerprintModal(true)}
+              className="text-xs text-gray-400 hover:text-white px-2 sm:px-3 py-1.5 rounded-lg border border-gray-600 hover:border-gray-500 transition-all flex items-center gap-1 sm:gap-2 cursor-pointer"
+              title="View key fingerprint"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              <span className="hidden sm:inline">Fingerprint</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Key Change Alert Banner */}
@@ -500,7 +577,7 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
       </div>
 
       {/* Input Area */}
-      <div className="p-5 bg-gray-800/90 backdrop-blur-sm border-t border-gray-700 shadow-lg">
+      <div className="p-3 sm:p-5 bg-gray-800/90 backdrop-blur-sm border-t border-gray-700 shadow-lg">
         {/* Error Message */}
         {sendError && (
           <div className="mb-3 flex items-center gap-2 text-xs text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2">
@@ -518,12 +595,12 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
             </button>
           </div>
         )}
-        <div className="flex gap-3 items-end">
+        <div className="flex gap-2 sm:gap-3 items-end">
             <textarea
             ref={textareaRef}
             rows={1}
-            className="flex-1 px-4 py-3 rounded-2xl border-2 border-gray-600 bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 transition-all resize-none overflow-y-auto leading-relaxed"
-            style={{ minHeight: '52px', maxHeight: '150px' }}
+            className="flex-1 px-3 sm:px-4 py-2 sm:py-3 rounded-2xl border-2 border-gray-600 bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 transition-all resize-none overflow-y-auto leading-relaxed text-sm sm:text-base"
+            style={{ minHeight: '44px', maxHeight: '150px' }}
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             placeholder={isKeyLoading ? "Securing connection..." : isSending ? "Sending message..." : `Message ${contactUsername}... (Shift+Enter for new line)`}
@@ -533,7 +610,7 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
             <button 
             onClick={handleSend}
             disabled={isKeyLoading || !contactPublicKey || !inputText.trim() || isSending}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-2xl font-bold hover:from-blue-700 hover:to-purple-700 disabled:from-gray-300 disabled:to-gray-400 transition-all shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none flex items-center gap-2 cursor-pointer disabled:cursor-not-allowed"
+            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 sm:px-8 py-3 sm:py-4 rounded-2xl font-bold hover:from-blue-700 hover:to-purple-700 disabled:from-gray-300 disabled:to-gray-400 transition-all shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none flex items-center gap-2 cursor-pointer disabled:cursor-not-allowed text-sm sm:text-base"
             >
             {isSending ? (
               <>
@@ -574,6 +651,26 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
         />
       )}
 
+      {/* Developer Mode Modal */}
+      <DeveloperMode
+        isOpen={showDeveloperMode}
+        onClose={() => setShowDeveloperMode(false)}
+        currentUser={currentUser}
+        contactUsername={contactUsername}
+        contactPublicKey={contactPublicKey}
+        onInjectMessage={handleInjectMessage}
+      />
+
+      {/* Developer Mode Modal */}
+      <DeveloperMode
+        isOpen={showDeveloperMode}
+        onClose={() => setShowDeveloperMode(false)}
+        currentUser={currentUser}
+        contactUsername={contactUsername}
+        contactPublicKey={contactPublicKey}
+        onInjectMessage={handleInjectMessage}
+      />
+
       {/* Key Fingerprint Modal */}
       {contactPublicKey && (
         <KeyFingerprintModal
@@ -592,6 +689,9 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
           }}
         />
       )}
+
+      {/* Toast Container */}
+      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 }

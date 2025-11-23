@@ -82,7 +82,7 @@ export const KeyFingerprintModal: React.FC<KeyFingerprintModalProps> = ({
       onClick={handleBackdropClick}
     >
       <div 
-        className="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden border border-gray-700"
+        className="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden border border-gray-700 mx-4"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

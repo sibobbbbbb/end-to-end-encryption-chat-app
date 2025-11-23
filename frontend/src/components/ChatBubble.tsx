@@ -36,7 +36,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
           color: 'text-green-400', 
           bgColor: 'bg-green-500/20', 
           icon: <ShieldCheck size={14} />, 
-          label: 'Verified',
+          label: '✓ Verified', // Sesuai spesifikasi: "✓ Verified"
           description: '✓ Signature verified, message authentic',
           fullExplanation: 'Message has been successfully verified:\n• ECDSA signature is valid\n• Message hash matches\n• Message has not been altered\n• Sent by the correct sender'
         };
@@ -45,7 +45,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
           color: 'text-yellow-400', 
           bgColor: 'bg-yellow-500/20', 
           icon: <ShieldAlert size={14} />, 
-          label: 'Unverified',
+          label: '✗ Unverified', // Sesuai spesifikasi: "✗ Unverified"
           description: '⚠ Could not verify signature',
           fullExplanation: 'Message could not be verified:\n• Signature is invalid or does not match\n• Message hash does not match\n• Sender\'s public key may be incorrect\n• Do not trust this message!'
         };
@@ -66,7 +66,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
   return (
     <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} animate-in slide-in-from-bottom-2 duration-300 w-full px-2`}>
       <div 
-        className={`max-w-[70%] min-w-[120px] rounded-2xl px-4 py-3 shadow-md ${ 
+        className={`max-w-[85%] sm:max-w-[70%] min-w-[120px] rounded-2xl px-3 sm:px-4 py-2 sm:py-3 shadow-md ${ 
           isMe 
             ? 'bg-gradient-to-br from-blue-600 to-purple-600 text-white' 
             : 'bg-gray-700 text-gray-100 border border-gray-600'
