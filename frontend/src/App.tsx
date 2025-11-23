@@ -38,6 +38,15 @@ function App() {
     setSelectedContact(null);
     localStorage.removeItem('last_user');
     localStorage.removeItem('token');
+    localStorage.removeItem('priv_' + currentUser);
+    localStorage.removeItem('pub_' + currentUser);
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith('pubkey_')) {
+        localStorage.removeItem(key);
+      }
+    }
+    localStorage.removeItem('chat_contacts');
   };
 
   if (isLoading) {
