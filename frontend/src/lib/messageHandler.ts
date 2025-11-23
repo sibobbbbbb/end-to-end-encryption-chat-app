@@ -20,8 +20,6 @@ export interface ProcessedMessage {
   hash?: string;
   signature?: { r: string; s: string };
   encryptedMessage?: string;
-  // Optional error information when processing fails
-  error?: string;
 }
 
 export const processIncomingMessage = async (
@@ -80,15 +78,13 @@ export const processIncomingMessage = async (
 
   } catch (error) {
     console.error("Gagal memproses pesan:", error);
-    const errMsg = error instanceof Error ? error.message : String(error);
     return {
       id: crypto.randomUUID(),
       sender: payload.sender_username,
-      text: `[Error] Failed to decrypt / process message: ${errMsg}`,
+      text: "[Pesan Gagal didekripsi / Rusak]",
       timestamp: payload.timestamp,
       isVerified: false,
-      status: 'corrupted',
-      error: errMsg
+      status: 'corrupted'
     };
   }
 
