@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { registerUser, loginUser } from '@/services/authService';
+import { showToast } from '@/components/Toast';
 
 interface AuthPageProps {
   onLoginSuccess: (username: string) => void;
@@ -14,7 +15,7 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username || !password) {
-        alert("Username and Password are required!");
+        showToast("Username and Password are required!", 'error');
         return;
     }
 
@@ -25,9 +26,10 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
         if (response && response.accessToken) {
           localStorage.setItem('token', response.accessToken);
         }
+        showToast("Login successful!", 'success');
       } else {
         await registerUser(username, password);
-        alert("Registration successful! Please login.");
+        showToast("Registration successful! Please login.", 'success');
         setIsLogin(true); // Switch to login mode after registration
         setIsLoading(false);
         return; // Don't auto-login so user remembers their password
@@ -38,14 +40,14 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
     } catch (error: unknown) {
       console.error(error);
       const message = error instanceof Error ? error.message : "An error occurred";
-      alert(message);
+      showToast(message, 'error');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex w-screen h-screen items-center justify-center bg-gray-900 text-white p-4 relative overflow-hidden">
+    <div className="flex w-screen h-screen items-center justify-center bg-gray-900 text-white p-4 sm:p-6 md:p-8 relative overflow-hidden">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Matrix-style Binary Rain */}
@@ -111,7 +113,7 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
         <div className="absolute top-[70%] right-[15%] w-1 h-1 bg-blue-300 rounded-full animate-ping-slow" style={{animationDelay: '1.5s'}}></div>
       </div>
       
-      <div className="w-full max-w-md rounded-2xl bg-gray-800/95 backdrop-blur-xl p-8 shadow-2xl relative z-10 border border-cyan-500/30 animate-fade-in-up">
+      <div className="w-full max-w-md rounded-2xl bg-gray-800/95 backdrop-blur-xl p-6 sm:p-8 shadow-2xl relative z-10 border border-cyan-500/30 animate-fade-in-up">
         {/* Glowing Border Effect */}
         <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-cyan-500/20 blur-xl -z-10 animate-glow-pulse"></div>
         <div className="text-center mb-8">

@@ -90,7 +90,7 @@ function App() {
       </header>
       
       {/* Main Layout: Sidebar (Kiri) + Chat (Kanan) */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden flex-col sm:flex-row">
         {/* Sidebar */}
         <ContactSidebar 
           selectedContact={selectedContact} 

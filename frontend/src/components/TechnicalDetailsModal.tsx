@@ -64,7 +64,6 @@ export const TechnicalDetailsModal: React.FC<TechnicalDetailsModalProps> = ({
 }) => {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [showTamperedDemo, setShowTamperedDemo] = useState(false);
-  const [demoResult, setDemoResult] = useState<{ verified: boolean; tampered: boolean } | null>(null);
 
   if (!isOpen) return null;
 
@@ -77,23 +76,7 @@ export const TechnicalDetailsModal: React.FC<TechnicalDetailsModalProps> = ({
   // Demo: Show verified vs tampered signature
   const runSignatureDemo = () => {
     setShowTamperedDemo(true);
-    
-    // Simulate verification with original signature (should pass)
-    // In real scenario, we'd need the sender's public key, but for demo we'll simulate
-    const originalVerified = messageData.verified;
-    
-    // Simulate tampered signature (modify one byte)
-    const tamperedSignature = {
-      r: messageData.signature.r,
-      s: messageData.signature.s.substring(0, messageData.signature.s.length - 2) + 'ff' // Tamper last byte
-    };
-    
-    // For demo purposes, we'll show the comparison
-    // In real app, we'd verify with actual public key
-    setDemoResult({
-      verified: originalVerified,
-      tampered: false // Tampered signature would fail verification
-    });
+    // Demo is shown in the UI below when showTamperedDemo is true
   };
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -108,7 +91,7 @@ export const TechnicalDetailsModal: React.FC<TechnicalDetailsModalProps> = ({
       onClick={handleBackdropClick}
     >
       <div 
-        className="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden border border-gray-700"
+        className="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden border border-gray-700 mx-4"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

@@ -104,8 +104,8 @@ export default function ContactSidebar({ onSelectContact, selectedContact, curre
   };
 
   return (
-    <div className="w-72 bg-gradient-to-b from-gray-900 to-gray-800 text-white flex flex-col border-r border-gray-700 shadow-2xl">
-      <div className="p-5 font-bold text-lg border-b border-gray-700/50 flex items-center gap-3 bg-gray-800/50">
+    <div className="w-full sm:w-72 bg-gradient-to-b from-gray-900 to-gray-800 text-white flex flex-col border-r border-gray-700 shadow-2xl">
+      <div className="p-3 sm:p-5 font-bold text-base sm:text-lg border-b border-gray-700/50 flex items-center gap-2 sm:gap-3 bg-gray-800/50">
         <div className="bg-gradient-to-br from-blue-500 to-purple-500 p-2 rounded-lg">
           <MessageSquare size={20} />
         </div>
@@ -113,7 +113,7 @@ export default function ContactSidebar({ onSelectContact, selectedContact, curre
       </div>
       
       {/* List Kontak */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2 scrollbar-thin scrollbar-thumb-gray-700 min-h-0">
+      <div className="flex-1 overflow-y-auto p-2 sm:p-3 space-y-2 scrollbar-thin scrollbar-thumb-gray-700 min-h-0">
         {contacts.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-500 py-8">
             <User size={48} className="mb-4 opacity-50" />
@@ -125,7 +125,7 @@ export default function ContactSidebar({ onSelectContact, selectedContact, curre
             <button
               key={contact}
               onClick={() => onSelectContact(contact)}
-              className={`relative group w-full text-left p-4 rounded-xl flex items-center gap-3 transition-all duration-200 cursor-pointer border ${
+              className={`relative group w-full text-left p-3 sm:p-4 rounded-xl flex items-center gap-2 sm:gap-3 transition-all duration-200 cursor-pointer border ${
                 selectedContact === contact 
                   ? 'bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg border-transparent' 
                   : 'bg-gray-700/30 hover:bg-gray-700/50 border-gray-600/30'
