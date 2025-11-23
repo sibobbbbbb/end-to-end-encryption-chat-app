@@ -6,7 +6,7 @@ import {
 } from "@/modules/auth/auth.schemas";
 import { validate } from "@/shared/middlewares/validation.middleware";
 import { authController } from "@/container";
-import { authLimiter } from "@/shared/middlewares/rate-limiter.middleware";
+// import { authLimiter } from "@/shared/middlewares/rate-limiter.middleware";
 
 /**
  * @file Defines the routes for authentication-related endpoints.
@@ -19,22 +19,22 @@ const authRouter = new Hono();
 
 authRouter.post(
   "/register",
-  authLimiter,
+  // authLimiter,
   validate(RegisterRequestSchema),
   authController.register
 );
 
 authRouter.post(
   "/challenge",
-  authLimiter,
+  // authLimiter,
   validate(ChallengeRequestSchema),
   authController.challenge
 );
 
 authRouter.post(
   "/login",
-  authLimiter,
-  validate(LoginVerifyRequestSchema),
+  // authLimiter,
+  validate(LoginVerifyRequestSchema)  ,
   authController.verify
 );
 

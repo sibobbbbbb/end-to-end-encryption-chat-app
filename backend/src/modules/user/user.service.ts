@@ -1,6 +1,6 @@
-import { UserRepository } from "@/shared/repositories/user.repository";
-import { NotFoundError } from "@/shared/exceptions/api-error";
-import { User } from "@/shared/models/user.model";
+import { UserRepository } from '@/modules/user/user.repository';
+import { NotFoundError } from '@/shared/exceptions/api-error';
+import { User } from '@/shared/models/user.model';
 
 /**
  * @class UserService
@@ -18,11 +18,11 @@ export class UserService {
    * @returns A User object containing the user's profile information.
    * @throws NotFoundError if the user does not exist.
    */
-  public async getMyProfile(id: number): Promise<User> {
-    const user = await this.userRepository.findById(id);
+  public async getUserByUsername(username: string): Promise<User> {
+    const user = await this.userRepository.findByUsername(username);
 
     if (!user) {
-      throw new NotFoundError("User not found");
+      throw new NotFoundError('User not found');
     }
 
     return user;

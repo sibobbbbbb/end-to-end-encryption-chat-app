@@ -4,7 +4,7 @@ import { TechnicalDetailsModal } from '@/components/TechnicalDetailsModal';
 import { KeyFingerprintModal } from '@/components/KeyFingerprintModal';
 import { DeveloperMode } from '@/components/DeveloperMode';
 import { ToastContainer, useToast, showToast } from '@/components/Toast';
-import { processIncomingMessage, type ProcessedMessage, type IncomingMessagePayload } from '@/lib/messageHandler';
+import { processIncomingMessage, type ProcessedMessage } from '@/lib/messageHandler';
 import { encryptMessage, hashMessage, signMessage, computeKeyFingerprint } from '@/lib/crypto';
 import { getPrivateKey } from '@/services/authService';
 import { getContactProfile } from '@/services/userService';
@@ -116,7 +116,6 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
           savePublicKey(contactUsername, newPublicKey, fingerprint);
           
           setContactPublicKey(newPublicKey);
-          console.log(`✅ Public key ${contactUsername} didapat:`, newPublicKey.substring(0, 20) + '...');
         } else {
           console.error(`❌ Failed to get or generate public key for ${contactUsername}`);
           showToast(`Failed to get public key for ${contactUsername}`, 'error');
@@ -160,7 +159,6 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
               processedMessages.push(processed);
             } catch (error) {
               console.error("Failed to process message:", error);
-              // Continue processing other messages
             }
           }
           
@@ -291,7 +289,6 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
 
        try {
          await sendMessage(payloadToSend);
-         console.log("✅ Message sent successfully");
 
          // D. Update UI optimistically (message will also come via polling)
          const newMsg: ProcessedMessage = {

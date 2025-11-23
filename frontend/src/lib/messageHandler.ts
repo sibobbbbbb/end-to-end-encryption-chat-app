@@ -55,7 +55,7 @@ export const processIncomingMessage = async (
     // PENTING: Sesuaikan logika ini dengan tim Backend/Sender Anda!
     const rawContentToHash = JSON.stringify({
         sender: payload.sender_username,
-        // receiver: myUsername, // sesuaikan jika ada di payload hash
+        receiver: myUsername, // sesuaikan jika ada di payload hash
         msg: decryptedText,
         ts: payload.timestamp
     });

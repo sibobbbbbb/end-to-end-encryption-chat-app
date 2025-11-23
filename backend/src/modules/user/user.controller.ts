@@ -12,13 +12,16 @@ export class UserController {
   constructor(private userService: UserService) {}
 
   /**
-   * Fetches the profile of the currently authenticated user.
+   * Fetches the profile of a user by username.
    */
-  public getMyProfile = async (c: Context) => {
-    const userId = c.get("jwtPayload").sub;
-
-    const userProfile = await this.userService.getMyProfile(userId);
-
-    return sendSuccess(c, 200, "Profile fetched successfully", userProfile);
+  public getUserProfile = async (c: Context) => {
+    const username = c.req.param("username");
+    
+    const user = await this.userService.getUserByUsername(username);
+    
+    return sendSuccess(c, 200, "User found", {
+      username: user.username,
+      publicKey: user.publicKey
+    });
   };
 }

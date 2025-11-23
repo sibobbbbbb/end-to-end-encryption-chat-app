@@ -1,7 +1,9 @@
 import { ec as EC } from 'elliptic';
 import { sha3_256 } from 'js-sha3';
 
-const API_URL = '/api/users';
+const BASE_URL = import.meta.env.VITE_API_URL || '/api'; 
+const API_URL = `${BASE_URL}/users`;
+
 const ec = new EC('secp256k1');
 
 export interface UserProfile {
@@ -33,10 +35,12 @@ const generateDummyPublicKey = (username: string): string => {
 
 export const getContactProfile = async (username: string): Promise<UserProfile | null> => {
   try {
+    const token = localStorage.getItem('token');
     const res = await fetch(`${API_URL}/${username}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
     });
 

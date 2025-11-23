@@ -10,11 +10,8 @@ import {
   ChallengeRequest,
   RegisterRequest,
 } from '@/modules/auth/auth.schemas';
-import { UserRepository } from '@/shared/repositories/user.repository';
-import {
-  generateTokens,
-  TokenPayload,
-} from './auth.token.helper';
+import { UserRepository } from '@/modules/user/user.repository';
+import { generateTokens, TokenPayload } from './auth.token.helper';
 import { NotFoundError } from '@/shared/exceptions/api-error';
 
 // Elliptic Curve

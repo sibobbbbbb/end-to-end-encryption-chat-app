@@ -1,4 +1,5 @@
-const API_URL = '/api/messages';
+const BASE_URL = import.meta.env.VITE_API_URL || '/api'; 
+const API_URL = `${BASE_URL}/messages`;
 
 export interface SendMessagePayload {
   sender_username: string;
@@ -30,10 +31,12 @@ export interface MessageResponse {
  */
 export const sendMessage = async (payload: SendMessagePayload): Promise<MessageResponse> => {
   try {
+    const token = localStorage.getItem('token');
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify(payload),
     });
@@ -67,11 +70,13 @@ export const fetchMessages = async (
     if (lastMessageId) {
       params.append('last_id', lastMessageId);
     }
+    const token = localStorage.getItem('token');
 
     const response = await fetch(`${API_URL}?${params.toString()}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
     });
 
@@ -102,11 +107,12 @@ export const pollMessages = async (
     if (lastTimestamp) {
       params.append('since', lastTimestamp);
     }
-
+    const token = localStorage.getItem('token');
     const response = await fetch(`${API_URL}/poll?${params.toString()}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
     });
 

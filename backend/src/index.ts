@@ -26,7 +26,6 @@ app.use('/api/*', cors({
   allowHeaders: ['Content-Type', 'Authorization'],
   exposeHeaders: ['Content-Length'],
   maxAge: 600,
-  credentials: true,
 }));
 
 // Middleware to set secure headers

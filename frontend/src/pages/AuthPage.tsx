@@ -9,7 +9,7 @@ interface AuthPageProps {
 export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState("");
-  const [password, setPassword] = useState(""); // State Password
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -22,7 +22,10 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
     setIsLoading(true);
     try {
       if (isLogin) {
-        await loginUser(username, password);
+        const response = await loginUser(username, password);
+        if (response && response.accessToken) {
+          localStorage.setItem('token', response.accessToken);
+        }
         showToast("Login successful!", 'success');
       } else {
         await registerUser(username, password);
