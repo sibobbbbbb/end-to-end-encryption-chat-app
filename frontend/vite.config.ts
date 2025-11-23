@@ -11,4 +11,19 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // KONFIGURASI TAMBAHAN:
+  server: {
+    proxy: {
+      // Meneruskan request /api ke Backend (Port 3000)
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
+  },
+  // Polyfill untuk 'global' yang dibutuhkan beberapa lib kriptografi lama
+  define: {
+    'global': 'window',
+  }
 })
