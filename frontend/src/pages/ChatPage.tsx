@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, type KeyboardEvent } from 'react';
 import { ChatBubble } from '@/components/ChatBubble';
+import { TechnicalDetailsModal } from '@/components/TechnicalDetailsModal';
 import { processIncomingMessage, type ProcessedMessage, type IncomingMessagePayload } from '@/lib/messageHandler';
 import { encryptMessage, hashMessage, signMessage } from '@/lib/crypto';
 import { getPrivateKey } from '@/services/authService';
-import { getContactProfile } from '@/services/userService'; // Pastikan file service ini sudah dibuat
+import { getContactProfile } from '@/services/userService';
 
 interface ChatPageProps {
   currentUser: string;
@@ -15,6 +16,7 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
   const [inputText, setInputText] = useState("");
   const [contactPublicKey, setContactPublicKey] = useState<string | null>(null);
   const [isKeyLoading, setIsKeyLoading] = useState(false);
+  const [selectedMessageForDetails, setSelectedMessageForDetails] = useState<ProcessedMessage | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -240,6 +242,13 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
             isMe={msg.sender === currentUser}
             status={msg.status}
             timestamp={msg.timestamp}
+            encryptionAlgorithm="ECC-256"
+            signatureDetails={msg.signature ? {
+              r: msg.signature.r,
+              s: msg.signature.s,
+              hash: msg.hash || ''
+            } : undefined}
+            onShowDetails={() => setSelectedMessageForDetails(msg)}
           />
         ))}
         <div ref={messagesEndRef} />
@@ -271,6 +280,25 @@ export default function ChatPage({ currentUser, contactUsername }: ChatPageProps
             </button>
         </div>
       </div>
+
+      {/* Technical Details Modal */}
+      {selectedMessageForDetails && (
+        <TechnicalDetailsModal
+          isOpen={!!selectedMessageForDetails}
+          onClose={() => setSelectedMessageForDetails(null)}
+          messageData={{
+            plainText: selectedMessageForDetails.text,
+            cipherText: selectedMessageForDetails.encryptedMessage,
+            hash: selectedMessageForDetails.hash || 'N/A',
+            signature: selectedMessageForDetails.signature || { r: '', s: '' },
+            timestamp: selectedMessageForDetails.timestamp,
+            sender: selectedMessageForDetails.sender,
+            encryptionAlgorithm: 'ECC (Elliptic Curve Cryptography)',
+            keySize: '256-bit',
+            verified: selectedMessageForDetails.status === 'verified'
+          }}
+        />
+      )}
     </div>
   );
 }

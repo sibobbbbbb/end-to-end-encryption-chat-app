@@ -15,7 +15,11 @@ export interface ProcessedMessage {
   text: string;
   isVerified: boolean;
   timestamp: string;
-  status: 'verified' | 'unverified' | 'corrupted'; // Status detail
+  status: 'verified' | 'unverified' | 'corrupted';
+  // For technical details modal
+  hash?: string;
+  signature?: { r: string; s: string };
+  encryptedMessage?: string;
 }
 
 export const processIncomingMessage = async (
@@ -29,6 +33,7 @@ export const processIncomingMessage = async (
   let decryptedText = "";
   let isIntegrityValid = false;
   let isSignatureValid = false;
+  let computedHash = "";
 
   try {
     // 1. Dekripsi Pesan
@@ -56,7 +61,7 @@ export const processIncomingMessage = async (
     // Atau jika tim Anda sepakat hanya hash isi pesan mentah:
     // const computedHash = hashMessage(decryptedText); 
     
-    const computedHash = hashMessage(rawContentToHash);
+    computedHash = hashMessage(rawContentToHash);
 
     // Bandingkan Hash hitungan sendiri vs Hash yang dikirim
     if (computedHash === payload.message_hash) {
@@ -95,6 +100,10 @@ export const processIncomingMessage = async (
     text: decryptedText,
     timestamp: payload.timestamp,
     isVerified: finalStatus === 'verified',
-    status: finalStatus
+    status: finalStatus,
+    // Include technical details for modal
+    hash: computedHash,
+    signature: payload.signature,
+    encryptedMessage: payload.encrypted_message
   };
 };

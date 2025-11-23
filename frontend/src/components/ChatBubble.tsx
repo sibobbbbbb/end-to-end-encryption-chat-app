@@ -1,5 +1,5 @@
-import React from 'react';
-import { ShieldCheck, ShieldAlert, AlertTriangle } from 'lucide-react'; // Pastikan install lucide-react
+import React, { useState } from 'react';
+import { ShieldCheck, ShieldAlert, AlertTriangle, Lock } from 'lucide-react';
 
 interface ChatBubbleProps {
   text: string;
@@ -7,18 +7,54 @@ interface ChatBubbleProps {
   isMe: boolean;
   status: 'verified' | 'unverified' | 'corrupted';
   timestamp: string;
+  encryptionAlgorithm?: string;
+  signatureDetails?: {
+    r: string;
+    s: string;
+    hash: string;
+  };
+  onShowDetails?: () => void;
 }
 
-export const ChatBubble: React.FC<ChatBubbleProps> = ({ text, sender, isMe, status, timestamp }) => {
+export const ChatBubble: React.FC<ChatBubbleProps> = ({ 
+  text, 
+  sender, 
+  isMe, 
+  status, 
+  timestamp, 
+  encryptionAlgorithm = 'ECC-256',
+  signatureDetails,
+  onShowDetails 
+}) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+
   // Warna dan Icon berdasarkan status keamanan
   const getStatusConfig = () => {
     switch (status) {
       case 'verified':
-        return { color: 'text-green-600', bgColor: 'bg-green-100', icon: <ShieldCheck size={14} />, label: 'Verified' };
+        return { 
+          color: 'text-green-400', 
+          bgColor: 'bg-green-500/20', 
+          icon: <ShieldCheck size={14} />, 
+          label: 'Verified',
+          description: 'Signature verified, message authentic'
+        };
       case 'unverified':
-        return { color: 'text-red-600', bgColor: 'bg-red-100', icon: <ShieldAlert size={14} />, label: 'Unverified' };
+        return { 
+          color: 'text-yellow-400', 
+          bgColor: 'bg-yellow-500/20', 
+          icon: <ShieldAlert size={14} />, 
+          label: 'Unverified',
+          description: 'Could not verify signature'
+        };
       case 'corrupted':
-        return { color: 'text-gray-600', bgColor: 'bg-gray-100', icon: <AlertTriangle size={14} />, label: 'Corrupt' };
+        return { 
+          color: 'text-red-400', 
+          bgColor: 'bg-red-500/20', 
+          icon: <AlertTriangle size={14} />, 
+          label: 'Tampered',
+          description: 'Message may have been altered!'
+        };
     }
   };
 
@@ -45,25 +81,62 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ text, sender, isMe, stat
         <p className="leading-relaxed text-[15px]">{text}</p>
         
         {/* Footer: Timestamp & Security Status */}
-        <div className={`flex items-center gap-2 mt-2 pt-2 ${isMe ? 'border-t border-white/20' : 'border-t border-gray-600'}`}>
-          <span className={`text-[11px] font-medium ${isMe ? 'text-white/70' : 'text-gray-400'}`}>
-            {new Date(timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
-          </span>
-          
-          {/* Indikator Keamanan (Hanya untuk pesan masuk) */}
-          {!isMe && (
-            <div className={`flex items-center gap-1 text-[10px] font-semibold ${config.color} ${config.bgColor} px-2 py-0.5 rounded-full`}>
-              {config.icon}
-              <span>{config.label}</span>
+        <div className={`flex items-center justify-between gap-3 mt-2 pt-2 ${isMe ? 'border-t border-white/20' : 'border-t border-gray-600'}`}>
+          <div className="flex items-center gap-2">
+            <span className={`text-[11px] font-medium ${isMe ? 'text-white/70' : 'text-gray-400'}`}>
+              {new Date(timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+            
+            {/* Encryption Algorithm Badge */}
+            <div className={`flex items-center gap-1 text-[10px] ${isMe ? 'text-white/60' : 'text-gray-500'}`}>
+              <Lock size={10} />
+              <span>{encryptionAlgorithm}</span>
             </div>
-          )}
+          </div>
           
-          {/* Checkmark untuk pesan terkirim (Hanya untuk pesan saya) */}
-          {isMe && (
-            <svg className="w-4 h-4 text-white/70" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-            </svg>
-          )}
+          <div className="flex items-center gap-2">
+            {/* Security Status Indicator */}
+            {!isMe && (
+              <div className="relative">
+                <button
+                  onMouseEnter={() => setShowTooltip(true)}
+                  onMouseLeave={() => setShowTooltip(false)}
+                  onClick={onShowDetails}
+                  className={`flex items-center gap-1 text-[10px] font-semibold ${config.color} ${config.bgColor} px-2 py-1 rounded-full hover:opacity-80 transition-opacity cursor-pointer`}
+                  title="Click for technical details"
+                >
+                  {config.icon}
+                  <span>{config.label}</span>
+                </button>
+                
+                {/* Tooltip */}
+                {showTooltip && (
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg whitespace-nowrap z-10 border border-gray-700">
+                    <div className="font-semibold mb-1">{config.description}</div>
+                    {signatureDetails && (
+                      <div className="text-gray-400 text-[10px] space-y-0.5">
+                        <div>Hash: {signatureDetails.hash.substring(0, 16)}...</div>
+                        <div>Sig R: {signatureDetails.r.substring(0, 16)}...</div>
+                        <div>Sig S: {signatureDetails.s.substring(0, 16)}...</div>
+                      </div>
+                    )}
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                      <div className="border-4 border-transparent border-t-gray-900"></div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Checkmark for sent messages */}
+            {isMe && (
+              <div className="flex items-center gap-1">
+                <svg className="w-4 h-4 text-white/70" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
