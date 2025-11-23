@@ -37,7 +37,8 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
           bgColor: 'bg-green-500/20', 
           icon: <ShieldCheck size={14} />, 
           label: 'Verified',
-          description: 'Signature verified, message authentic'
+          description: '✓ Signature verified, message authentic',
+          fullExplanation: 'Message has been successfully verified:\n• ECDSA signature is valid\n• Message hash matches\n• Message has not been altered\n• Sent by the correct sender'
         };
       case 'unverified':
         return { 
@@ -45,7 +46,8 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
           bgColor: 'bg-yellow-500/20', 
           icon: <ShieldAlert size={14} />, 
           label: 'Unverified',
-          description: 'Could not verify signature'
+          description: '⚠ Could not verify signature',
+          fullExplanation: 'Message could not be verified:\n• Signature is invalid or does not match\n• Message hash does not match\n• Sender\'s public key may be incorrect\n• Do not trust this message!'
         };
       case 'corrupted':
         return { 
@@ -53,7 +55,8 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
           bgColor: 'bg-red-500/20', 
           icon: <AlertTriangle size={14} />, 
           label: 'Tampered',
-          description: 'Message may have been altered!'
+          description: '⚠ Message may have been altered!',
+          fullExplanation: 'Message may have been altered or corrupted:\n• Decryption failed\n• Invalid format\n• Signature does not match\n• Message may have been tampered with!\n• DO NOT TRUST this message!'
         };
     }
   };
@@ -111,15 +114,32 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
                 
                 {/* Tooltip */}
                 {showTooltip && (
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg whitespace-nowrap z-10 border border-gray-700">
-                    <div className="font-semibold mb-1">{config.description}</div>
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-4 py-3 bg-gray-900 text-white text-xs rounded-lg shadow-xl z-10 border border-gray-700 max-w-xs">
+                    <div className="font-semibold mb-2 text-sm">{config.description}</div>
+                    <div className="text-gray-300 text-[11px] leading-relaxed whitespace-pre-line mb-2">
+                      {config.fullExplanation}
+                    </div>
                     {signatureDetails && (
-                      <div className="text-gray-400 text-[10px] space-y-0.5">
-                        <div>Hash: {signatureDetails.hash.substring(0, 16)}...</div>
-                        <div>Sig R: {signatureDetails.r.substring(0, 16)}...</div>
-                        <div>Sig S: {signatureDetails.s.substring(0, 16)}...</div>
+                      <div className="pt-2 border-t border-gray-700">
+                        <div className="text-gray-400 text-[10px] space-y-1 font-mono">
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-500">Hash:</span>
+                            <span className="text-yellow-300">{signatureDetails.hash.substring(0, 16)}...</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-500">Sig R:</span>
+                            <span className="text-blue-300">{signatureDetails.r.substring(0, 16)}...</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-500">Sig S:</span>
+                            <span className="text-purple-300">{signatureDetails.s.substring(0, 16)}...</span>
+                          </div>
+                        </div>
                       </div>
                     )}
+                    <div className="mt-2 pt-2 border-t border-gray-700 text-[10px] text-gray-400">
+                      Click for full technical details
+                    </div>
                     <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
                       <div className="border-4 border-transparent border-t-gray-900"></div>
                     </div>

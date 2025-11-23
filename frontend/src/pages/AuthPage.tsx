@@ -14,7 +14,7 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username || !password) {
-        alert("Username dan Password wajib diisi!");
+        alert("Username and Password are required!");
         return;
     }
 
@@ -25,17 +25,17 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
         // Tidak perlu alert login berhasil agar UX lebih cepat
       } else {
         await registerUser(username, password);
-        alert("Registrasi Berhasil! Silakan login.");
-        setIsLogin(true); // Pindah ke mode login setelah register
+        alert("Registration successful! Please login.");
+        setIsLogin(true); // Switch to login mode after registration
         setIsLoading(false);
-        return; // Jangan langsung login otomatis biar user ingat passwordnya
+        return; // Don't auto-login so user remembers their password
       }
       
       // Pindah ke halaman utama
       onLoginSuccess(username);
     } catch (error: unknown) {
       console.error(error);
-      const message = error instanceof Error ? error.message : "Terjadi kesalahan";
+      const message = error instanceof Error ? error.message : "An error occurred";
       alert(message);
     } finally {
       setIsLoading(false);

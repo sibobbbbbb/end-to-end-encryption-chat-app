@@ -30,7 +30,7 @@ export const registerUser = async (username: string, password: string) => {
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.message || 'Registrasi gagal');
+    throw new Error(errorData.message || 'Registration failed');
   }
   
   return await response.json();
@@ -54,7 +54,7 @@ export const loginUser = async (username: string, password: string) => {
   
   if (!challengeRes.ok) {
       const err = await challengeRes.json();
-      throw new Error(err.message || 'User tidak ditemukan / Gagal meminta challenge');
+      throw new Error(err.message || 'User not found / Failed to request challenge');
   }
   
   const { data: { nonce } } = await challengeRes.json();
@@ -75,7 +75,7 @@ export const loginUser = async (username: string, password: string) => {
 
   if (!verifyRes.ok) {
       const err = await verifyRes.json();
-      throw new Error(err.message || 'Login gagal / Password salah (Signature mismatch)');
+      throw new Error(err.message || 'Login failed / Incorrect password (Signature mismatch)');
   }
   
   const result = await verifyRes.json();

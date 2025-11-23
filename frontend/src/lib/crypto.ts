@@ -123,6 +123,30 @@ export const decryptMessage = async (
     return new TextDecoder().decode(decrypted);
   } catch (error) {
     console.error("Gagal dekripsi:", error);
-    throw new Error("Decryption Failed");
+    if (error instanceof Error) {
+      if (error.message.includes('bad decrypt') || error.message.includes('decryption')) {
+        throw new Error("DECRYPTION_FAILED: Message could not be decrypted. Public key may not match or message has been altered.");
+      }
+      if (error.message.includes('JSON')) {
+        throw new Error("INVALID_FORMAT: Encrypted message format is invalid.");
+      }
+    }
+    throw new Error("DECRYPTION_FAILED: Failed to decrypt message. Check the recipient's public key.");
   }
+};
+
+// --- 6. Key Fingerprint (SHA-256 hash of public key) ---
+export const computeKeyFingerprint = (publicKeyHex: string): string => {
+  // Hash public key untuk mendapatkan fingerprint
+  const fingerprint = hashMessage(publicKeyHex);
+  // Format sebagai hex string dengan separator setiap 2 karakter untuk readability
+  return fingerprint.match(/.{1,2}/g)?.join(':') || fingerprint;
+};
+
+// Format fingerprint untuk display (first 16 chars + ... + last 8 chars)
+export const formatFingerprint = (fingerprint: string, showFull: boolean = false): string => {
+  if (showFull) return fingerprint;
+  const clean = fingerprint.replace(/:/g, '');
+  if (clean.length <= 16) return clean;
+  return `${clean.substring(0, 8)}...${clean.substring(clean.length - 8)}`;
 };
