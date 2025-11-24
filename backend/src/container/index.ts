@@ -6,6 +6,9 @@ import { UserService } from '@/modules/user/user.service';
 import { MessageRepository } from '@/modules/message/message.repository';
 import { MessageService } from '@/modules/message/message.service';
 import { MessageController } from '@/modules/message/message.controller';
+import { ContactRepository } from '@/modules/contact/contact.repository';
+import { ContactService } from '@/modules/contact/contact.service';
+import { ContactController } from '@/modules/contact/contact.controller';
 
 /**
  * @file Dependency Injection (DI) Container.
@@ -31,3 +34,8 @@ export const userController = new UserController(userService);
 const messageRepository = new MessageRepository();
 const messageService = new MessageService(messageRepository, userRepository);
 export const messageController = new MessageController(messageService);
+
+// Dependency Injection for Contact modules
+const contactRepository = new ContactRepository();
+const contactService = new ContactService(contactRepository, userRepository);
+export const contactController = new ContactController(contactService);

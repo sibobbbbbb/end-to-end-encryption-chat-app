@@ -3,6 +3,7 @@ import authRouter from '@/modules/auth/auth.route';
 import userRouter from '@/modules/user/user.route';
 import healthRouter from '@/modules/health/health.route';
 import messageRouter from '@/modules/message/message.route';
+import contactRouter from '@/modules/contact/contact.route';
 
 /**
  * @file Main API router.
@@ -18,5 +19,6 @@ api.route('/health', healthRouter);
 api.route('/auth', authRouter);
 api.route('/users', userRouter);
 api.route('/messages', messageRouter);
+api.route('/contacts', contactRouter);
 
 export default api;
