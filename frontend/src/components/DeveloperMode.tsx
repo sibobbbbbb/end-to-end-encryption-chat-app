@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { X, TestTube, Key, AlertTriangle, Lock, Hash, FileSignature } from 'lucide-react';
-import { decryptMessage, hashMessage, verifySignature } from '@/lib/crypto';
+import { X, TestTube, Key, AlertTriangle, Lock, FileSignature } from 'lucide-react';
+import { decryptMessage } from '@/lib/crypto';
 import { getPrivateKey } from '@/services/authService';
 import type { IncomingMessagePayload } from '@/lib/messageHandler';
 
@@ -101,15 +101,15 @@ export const DeveloperMode: React.FC<DeveloperModeProps> = ({
 
       // Create a valid message first
       const timestamp = new Date().toISOString();
-      const messageText = tamperedPayload.encrypted_message || 'Test message';
+      // const messageText = tamperedPayload.encrypted_message || 'Test message';
       
       // If we have a valid encrypted message, try to tamper it
       if (tamperedPayload.encrypted_message) {
         // Tamper the encrypted message (add random characters)
-        const tamperedEncrypted = tamperedPayload.encrypted_message.slice(0, -10) + 'TAMPERED';
-        const tamperedHash = tamperedPayload.message_hash 
-          ? tamperedPayload.message_hash.slice(0, -5) + 'XXXXX'
-          : 'tampered_hash';
+        // const tamperedEncrypted = tamperedPayload.encrypted_message.slice(0, -10) + 'TAMPERED';
+        // const tamperedHash = tamperedPayload.message_hash 
+        //   ? tamperedPayload.message_hash.slice(0, -5) + 'XXXXX'
+        //   : 'tampered_hash';
         
         // Try to verify
         const { hashMessage } = await import('@/lib/crypto');
@@ -131,10 +131,12 @@ export const DeveloperMode: React.FC<DeveloperModeProps> = ({
           }
         } catch (error) {
           // Verification will fail
+          console.log(error);
         }
 
         setTamperedResult({
-          verified: false, // Will always fail because we tampered
+          // verified: false, // Will always fail because we tampered
+          verified: verified,
           error: 'Verification failed: Message has been tampered with',
         });
       } else {
