@@ -11,6 +11,7 @@ import { getContactProfile } from '@/services/userService';
 import { savePublicKey, getStoredPublicKey, trustNewKey } from '@/lib/keyStorage';
 import { sendMessage, pollMessages } from '@/services/messageService';
 import { TestTube } from 'lucide-react';
+import type { IncomingMessagePayload } from '@/lib/messageHandler';
 
 interface ChatPageProps {
   currentUser: string;
