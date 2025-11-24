@@ -14,12 +14,14 @@ import {
   fetchContacts,
   createContact,
   deleteContact,
+  AuthExpiredError,
 } from "@/services/contactService";
 
 interface ContactSidebarProps {
   onSelectContact: (username: string | null) => void;
   selectedContact: string | null;
   currentUser: string;
+  onAuthError: (message?: string) => void;
 }
 
 const buildCacheKey = (username: string) => `chat_contacts_cache_${username}`;
@@ -28,6 +30,7 @@ export default function ContactSidebar({
   onSelectContact,
   selectedContact,
   currentUser,
+  onAuthError,
 }: ContactSidebarProps) {
   const [contacts, setContacts] = useState<ContactSummary[]>([]);
   const [contactsError, setContactsError] = useState<string | null>(null);
@@ -80,6 +83,10 @@ export default function ContactSidebar({
         setContacts(sorted);
         writeCache(username, sorted);
       } catch (error) {
+        if (error instanceof AuthExpiredError) {
+          onAuthError(error.message);
+          return;
+        }
         console.error("Failed to fetch contacts from server:", error);
         const cached = readCache(username);
         setContacts(cached);
@@ -91,7 +98,7 @@ export default function ContactSidebar({
         setIsSyncing(false);
       }
     },
-    [readCache, writeCache]
+    [onAuthError, readCache, writeCache]
   );
 
   useEffect(() => {
@@ -149,6 +156,10 @@ export default function ContactSidebar({
         setValidationSuccess(false);
       }, 2000);
     } catch (error) {
+      if (error instanceof AuthExpiredError) {
+        onAuthError(error.message);
+        return;
+      }
       console.error("Failed to validate contact:", error);
       setValidationError(
         error instanceof Error
@@ -176,6 +187,10 @@ export default function ContactSidebar({
           onSelectContact(null);
         }
       } catch (error) {
+        if (error instanceof AuthExpiredError) {
+          onAuthError(error.message);
+          return;
+        }
         console.error("Failed to remove contact:", error);
         setValidationError(
           error instanceof Error ? error.message : "Failed to remove contact"

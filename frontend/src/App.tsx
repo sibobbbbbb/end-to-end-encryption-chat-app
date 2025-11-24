@@ -3,6 +3,7 @@ import { MessageSquare, LogOut } from "lucide-react";
 import AuthPage from "@/pages/AuthPage";
 import ChatPage from "@/pages/ChatPage";
 import ContactSidebar from "@/components/ContactSidebar";
+import { showToast } from "@/components/Toast";
 
 function App() {
   const [currentUser, setCurrentUser] = useState<string | null>(null);
@@ -47,6 +48,14 @@ function App() {
         localStorage.removeItem(key);
       }
     }
+  };
+
+  const handleAuthError = (message?: string) => {
+    showToast(
+      message || "Your session has expired. Please log in again.",
+      "error"
+    );
+    handleLogout();
   };
 
   if (isLoading) {
@@ -110,6 +119,7 @@ function App() {
           selectedContact={selectedContact}
           onSelectContact={setSelectedContact}
           currentUser={currentUser}
+          onAuthError={handleAuthError}
         />
 
         {/* Chat Area */}

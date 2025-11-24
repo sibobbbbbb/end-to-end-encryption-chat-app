@@ -7,6 +7,13 @@ export interface ContactSummary {
   addedAt?: string;
 }
 
+export class AuthExpiredError extends Error {
+  constructor(message = "Session expired. Please log in again.") {
+    super(message);
+    this.name = "AuthExpiredError";
+  }
+}
+
 const buildHeaders = () => {
   const token = localStorage.getItem("token");
   if (!token) {
@@ -23,6 +30,10 @@ const parseResponse = async (res: Response) => {
   const payload = await res
     .json()
     .catch(() => ({ message: "Unable to parse server response" }));
+
+  if (res.status === 401 || res.status === 403) {
+    throw new AuthExpiredError(payload.message);
+  }
 
   if (!res.ok) {
     throw new Error(payload.message || "Request failed");

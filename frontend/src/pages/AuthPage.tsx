@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { registerUser, loginUser, getPrivateKey } from "@/services/authService";
+import { registerUser, loginUser } from "@/services/authService";
 import { showToast } from "@/components/Toast";
 import { generateKeyPairFromPassword } from "@/lib/crypto";
 import { AlertTriangle } from "lucide-react";
@@ -13,32 +13,11 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [edgeCaseWarning, setEdgeCaseWarning] = useState<string | null>(null);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   useEffect(() => {
-    setEdgeCaseWarning(null);
+    setLoginError(null);
   }, [username, password, isLogin]);
-
-  const detectAuthEdgeCase = (
-    mode: "login" | "register",
-    candidateUsername: string,
-    derivedPrivateKey: string
-  ) => {
-    const storedKey = getPrivateKey(candidateUsername);
-    if (mode === "login") {
-      if (!storedKey) {
-        return "We couldn't find a cached private key for this username on this device. Logging in will treat this as a new device, so you may need to re-verify contact fingerprints.";
-      }
-      if (storedKey !== derivedPrivateKey) {
-        return "The password you entered produces a different private key than the one stored locally. Double-check your password because using a different one will rotate your identity and make old messages unreadable.";
-      }
-    } else {
-      if (storedKey && storedKey !== derivedPrivateKey) {
-        return "A different private key is already cached for this username on this device. Continuing registration will overwrite the cached key.";
-      }
-    }
-    return null;
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,13 +34,8 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
       return;
     }
 
+    setLoginError(null);
     const derivedKeys = generateKeyPairFromPassword(username, password);
-    const warningMessage = detectAuthEdgeCase(
-      isLogin ? "login" : "register",
-      username,
-      derivedKeys.privateKey
-    );
-    setEdgeCaseWarning(warningMessage);
 
     setIsLoading(true);
     try {
@@ -84,6 +58,9 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
       console.error(error);
       const message =
         error instanceof Error ? error.message : "An error occurred";
+      if (isLogin) {
+        setLoginError(message);
+      }
       showToast(message, "error");
     } finally {
       setIsLoading(false);
@@ -356,14 +333,12 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
           </button>
         </form>
 
-        {edgeCaseWarning && (
+        {isLogin && loginError && (
           <div className="mt-6 flex gap-3 rounded-2xl border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-yellow-100 text-sm">
             <AlertTriangle size={18} className="flex-shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <p className="font-semibold text-yellow-50">
-                Auth edge case detected
-              </p>
-              <p className="text-xs text-yellow-100/90">{edgeCaseWarning}</p>
+              <p className="font-semibold text-yellow-50">Login failed</p>
+              <p className="text-xs text-yellow-100/90">{loginError}</p>
             </div>
           </div>
         )}
