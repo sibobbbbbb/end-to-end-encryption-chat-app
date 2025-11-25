@@ -10,16 +10,39 @@ Web-based chat application with security guarantees of **Confidentiality** (ECC+
 - **Anti-Replay:** Uses one-time nonces and timestamps.
 
 ## 🛠️ Tech Stack
-- **Frontend:** React, Vite, TypeScript, Tailwind (Encryption by `elliptic` & `WebCrypto API`).
+- **Frontend:** React, Vite, TypeScript, Tailwind.
 - **Backend:** Hono (Bun), PostgreSQL, Drizzle ORM.
+
+## 📚 Key Dependencies
+Libraries utama yang digunakan untuk implementasi kriptografi:
+- `elliptic` (v6.6.1): Untuk operasi kurva eliptik (secp256k1) dan ECDSA.
+- `js-sha3` (v0.9.3): Untuk hashing SHA3-256.
+- `bn.js`: Untuk operasi BigNumber dalam matematika ECC.
+- `Web Crypto API`: Standar browser untuk enkripsi AES-GCM.
 
 ## 📦 How to Run (Dev Mode)
 
-1. **Preparation:**
-   Ensure `bun` and `docker` are installed.
+### Prerequisites
+Ensure `bun` and `docker` are installed on your machine.
 
-2. **Run All (Backend + Frontend + DB):**
-   Simply click the `dev.bat` file or run the script manually.
+### Option 1: Automatic (Windows)
+Simply double-click the `dev.bat` file. This script will install dependencies, start the database container, run migrations, and launch both frontend and backend.
+
+### Option 2: Manual (Mac/Linux/Debug)
+1. **Install Dependencies:**
+   ```bash
+   cd backend && bun install
+   cd ../frontend && bun install
+
+2.  **Start Database:**
+    ```bash
+    cd backend
+    docker compose up -d
+    bun db:migrate
+    ```
+3.  **Run Services:**
+      - Backend: `cd backend && bun run dev`
+      - Frontend: `cd frontend && bun run dev`
 
 ## 👥 Group Members
 
